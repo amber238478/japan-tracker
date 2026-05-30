@@ -95,7 +95,7 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div ref={menuRef} style={{ position: 'relative' }}>
                 <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
-                  style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 16, cursor: 'pointer' }}>
+                  style={{ padding: '4px 8px', borderRadius: 6, border: '0.5px solid var(--border)', background: 'white', fontSize: 13, fontFamily: 'Helvetica, Arial, sans-serif', color: 'var(--accent)', cursor: 'pointer' }}>
                   {showRealToday ? `今天 · ${today}` : `DAY ${dayNum > 0 ? dayNum : '—'} · ${tripDisplayDate}`}
                 </button>
                 {showDayMenu && (
