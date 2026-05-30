@@ -112,8 +112,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Trip day records */}
-        <div className="section-label">旅程第 {dayNum > 0 ? dayNum : '—'} 日花費</div>
+        {/* Trip day records (label removed - DAY N shown in header) */}
         {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>載入中...</div>}
         {!loading && tripDayReceipts.length === 0 && (
           <div style={{ color: 'var(--text-hint)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>
