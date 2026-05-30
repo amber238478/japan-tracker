@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, saveSettings } from '@/lib/settings'
 import { AppSettings } from '@/lib/types'
+import { useCallback } from 'react'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -16,6 +17,47 @@ export default function SettingsPage() {
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
+
+  const reportBug = useCallback(async () => {
+    try {
+      const url = window.location.href
+      const settings = getSettings()
+      const logs = (window as any).getAppLogs ? (window as any).getAppLogs() : []
+      const storage: Record<string,string> = {}
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k) storage[k] = localStorage.getItem(k) || ''
+      }
+      const payload = {
+        ts: new Date().toISOString(),
+        url,
+        userAgent: navigator.userAgent,
+        settings,
+        logs,
+        localStorage: storage,
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const fileName = `japan-tracker-report-${new Date().toISOString().replace(/[:.]/g,'-')}.json`
+      // copy to clipboard
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(payload))
+        alert('Report copied to clipboard as JSON. Also starting download.')
+      } catch {
+        // ignore
+      }
+      // download
+      const urlBlob = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = urlBlob
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(urlBlob)
+    } catch (e) {
+      alert('無法產生報告: ' + (e as any)?.message)
+    }
+  }, [])
 
   return (
     <main style={{ padding: '20px 16px 100px' }}>
@@ -71,6 +113,9 @@ export default function SettingsPage() {
 
         <button className="btn-primary" onClick={save}>
           {saved ? '已儲存 ✓' : '儲存設定'}
+        </button>
+        <button onClick={reportBug} style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white' }}>
+          回報錯誤 / 匯出報告
         </button>
       </div>
     </main>
