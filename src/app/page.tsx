@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, toTWD, getDayNumber } from '@/lib/settings'
@@ -29,6 +29,17 @@ export default function Home() {
   // 計算當前是旅程第幾日（以 today 為基準），並求出那一天的日期字串
     const initialOffset = Math.max(0, getDayNumber(today, s.tripStart) - 1)
     const [dayOffset, setDayOffset] = useState<number>(initialOffset)
+    const touchStartX = useRef<number | null>(null)
+    const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
+    const handleTouchEnd = (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return
+      const endX = e.changedTouches[0].clientX
+      const dx = endX - touchStartX.current
+      const THRESH = 50
+      if (dx > THRESH) setDayOffset(d => Math.max(0, d - 1))
+      else if (dx < -THRESH) setDayOffset(d => Math.min(d + 1, s.tripDays - 1))
+      touchStartX.current = null
+    }
     const displayDateObj = new Date(s.tripStart)
     displayDateObj.setDate(displayDateObj.getDate() + dayOffset)
     const displayDate = displayDateObj.toISOString().split('T')[0]
@@ -40,7 +51,7 @@ export default function Home() {
   const split = calcSplit(receipts, s.user1, s.user2)
 
   return (
-    <main>
+    <main onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Header */}
       <div style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
@@ -53,6 +64,7 @@ export default function Home() {
               <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
               <button onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={dayOffset >= s.tripDays - 1}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
+              <button onClick={() => setDayOffset(initialOffset)} style={{ marginLeft: 6, fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'transparent' }}>今天</button>
             </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
