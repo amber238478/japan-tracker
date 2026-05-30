@@ -33,6 +33,7 @@ export default function Home() {
   const inRange = todayObj >= tripStartObj && todayObj <= tripEndObj
   const initialOffset = inRange ? Math.max(0, getDayNumber(today, s.tripStart) - 1) : 0
   const [dayOffset, setDayOffset] = useState<number>(initialOffset)
+  const [showRealToday, setShowRealToday] = useState<boolean>(!inRange)
   const touchStartX = useRef<number | null>(null)
     const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
     const handleTouchEnd = (e: React.TouchEvent) => {
@@ -47,8 +48,8 @@ export default function Home() {
     const displayDateObj = new Date(s.tripStart)
     displayDateObj.setDate(displayDateObj.getDate() + dayOffset)
     const tripDisplayDate = displayDateObj.toISOString().split('T')[0]
-    const displayDate = inRange ? tripDisplayDate : today
-    const dayNum = inRange ? dayOffset + 1 : 0
+    const displayDate = showRealToday ? today : tripDisplayDate
+    const dayNum = showRealToday ? 0 : dayOffset + 1
     const tripDayReceipts = receipts.filter(r => r.date === displayDate)
     const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
     // 建立旅程日期選單資料
@@ -92,12 +93,12 @@ export default function Home() {
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button aria-label="previous day" onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={!inRange || dayOffset <= 0}
+              <button aria-label="previous day" onClick={() => { setShowRealToday(false); setDayOffset(d => Math.max(0, d - 1)) }} disabled={showRealToday || dayOffset <= 0}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset <= 0 ? 'default' : 'pointer', color: dayOffset <= 0 ? 'var(--text-muted)' : 'var(--text-primary)' }}>‹</button>
               <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
-              <button aria-label="next day" onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={!inRange || dayOffset >= s.tripDays - 1}
+              <button aria-label="next day" onClick={() => { setShowRealToday(false); setDayOffset(d => Math.min(d + 1, s.tripDays - 1)) }} disabled={showRealToday || dayOffset >= s.tripDays - 1}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
-              <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
+              <button aria-label="today" onClick={() => { setShowRealToday(true); }}
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
               <div ref={menuRef} style={{ position: 'relative', marginLeft: 8 }}>
                 <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
@@ -106,8 +107,8 @@ export default function Home() {
                 </button>
                 {showDayMenu && (
                   <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50 }}>
-                    {tripDaysArray.map(d => (
-                      <div key={d.day} onClick={() => { setDayOffset(d.day - 1); setShowDayMenu(false) }}
+                        {tripDaysArray.map(d => (
+                          <div key={d.day} onClick={() => { setShowRealToday(false); setDayOffset(d.day - 1); setShowDayMenu(false) }}
                         style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         DAY {d.day} · {d.date}
                       </div>
