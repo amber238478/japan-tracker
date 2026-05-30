@@ -50,21 +50,34 @@ export default function Home() {
   const budgetUsed = Math.round((tripTotal / s.budget) * 100)
   const split = calcSplit(receipts, s.user1, s.user2)
 
+  // 鍵盤左右鍵與 Home 支援
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setDayOffset(d => Math.max(0, d - 1))
+      if (e.key === 'ArrowRight') setDayOffset(d => Math.min(d + 1, s.tripDays - 1))
+      if (e.key === 'Home') setDayOffset(initialOffset)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [initialOffset, s.tripDays])
+
   return (
-    <main onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <main>
       {/* Header */}
-      <div style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+        style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 2 }}>
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={dayOffset <= 0}
+              <button aria-label="previous day" onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={dayOffset <= 0}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset <= 0 ? 'default' : 'pointer', color: dayOffset <= 0 ? 'var(--text-muted)' : 'var(--text-primary)' }}>‹</button>
               <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
-              <button onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={dayOffset >= s.tripDays - 1}
+              <button aria-label="next day" onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={dayOffset >= s.tripDays - 1}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
-              <button onClick={() => setDayOffset(initialOffset)} style={{ marginLeft: 6, fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'transparent' }}>今天</button>
+              <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
+                style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
             </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
@@ -85,17 +98,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Budget */}
-        <div className="card" style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>預算進度</div>
-            <div style={{ fontSize: 11, color: 'var(--accent)' }}>剩 ¥{(s.budget - tripTotal).toLocaleString()}</div>
-          </div>
-          <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${Math.min(budgetUsed, 100)}%` }} />
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 5 }}>已使用 {budgetUsed}%</div>
-        </div>
+        {/* Budget removed per request */}
 
         {/* Split summary */}
         {Math.abs(split.balance) >= 100 && (
