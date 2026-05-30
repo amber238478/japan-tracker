@@ -4,7 +4,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   budget: 100000,
   exchangeRate: 0.206,
   tripDays: 8,
-  tripStart: '2026-11-01',
+  tripStart: '2026-06-26',
   tripName: '東京之旅',
   user1: '我',
   user2: '飛飛',

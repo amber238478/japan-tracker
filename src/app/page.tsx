@@ -25,11 +25,12 @@ export default function Home() {
 
   const s = getSettings()
   const today = new Date().toISOString().split('T')[0]
+  const displayDate = s.tripStart ?? today
   const todayReceipts = receipts.filter(r => r.date === today)
   const todayTotal = todayReceipts.reduce((a, r) => a + r.amountJPY, 0)
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
   const budgetUsed = Math.round((tripTotal / s.budget) * 100)
-  const dayNum = getDayNumber(today, s.tripStart)
+  const dayNum = getDayNumber(displayDate, s.tripStart)
   const split = calcSplit(receipts, s.user1, s.user2)
 
   return (
@@ -40,7 +41,7 @@ export default function Home() {
           <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 2 }}>
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 500 }}>{today}</div>
+          <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
       </div>
