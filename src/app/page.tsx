@@ -88,11 +88,10 @@ export default function Home() {
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
               <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
-              <select aria-label="select trip day" value={inRange ? dayOffset : ''} onChange={e => setDayOffset(Number(e.target.value))}
-                disabled={!inRange}
+              <select aria-label="select trip day" value={String(dayOffset)} onChange={e => setDayOffset(Number(e.target.value))}
                 style={{ marginLeft: 8, padding: '6px 8px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 12 }}>
                 {tripDaysArray.map(d => (
-                  <option key={d.day} value={d.day - 1}>DAY {d.day} · {d.date}</option>
+                  <option key={d.day} value={String(d.day - 1)}>DAY {d.day} · {d.date}</option>
                 ))}
               </select>
             </div>
