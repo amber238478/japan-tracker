@@ -27,12 +27,14 @@ export default function Home() {
   const today = new Date().toISOString().split('T')[0]
   const displayDate = s.tripStart ?? today
   // 計算當前是旅程第幾日（以 today 為基準），並求出那一天的日期字串
-  const dayNum = getDayNumber(today, s.tripStart)
-  const tripDayDateObj = new Date(s.tripStart)
-  tripDayDateObj.setDate(tripDayDateObj.getDate() + (dayNum - 1))
-  const tripDayDate = tripDayDateObj.toISOString().split('T')[0]
-  const tripDayReceipts = receipts.filter(r => r.date === tripDayDate)
-  const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
+    const initialOffset = Math.max(0, getDayNumber(today, s.tripStart) - 1)
+    const [dayOffset, setDayOffset] = useState<number>(initialOffset)
+    const displayDateObj = new Date(s.tripStart)
+    displayDateObj.setDate(displayDateObj.getDate() + dayOffset)
+    const displayDate = displayDateObj.toISOString().split('T')[0]
+    const dayNum = dayOffset + 1
+    const tripDayReceipts = receipts.filter(r => r.date === displayDate)
+    const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
   const budgetUsed = Math.round((tripTotal / s.budget) * 100)
   const split = calcSplit(receipts, s.user1, s.user2)
@@ -45,7 +47,13 @@ export default function Home() {
           <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 2 }}>
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={dayOffset <= 0}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset <= 0 ? 'default' : 'pointer', color: dayOffset <= 0 ? 'var(--text-muted)' : 'var(--text-primary)' }}>‹</button>
+              <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
+              <button onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={dayOffset >= s.tripDays - 1}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
+            </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
       </div>
