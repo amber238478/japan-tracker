@@ -25,7 +25,6 @@ export default function Home() {
 
   const s = getSettings()
   const today = new Date().toISOString().split('T')[0]
-  const displayDate = s.tripStart ?? today
   // 計算當前是旅程第幾日（以 today 為基準），並求出那一天的日期字串
     const initialOffset = Math.max(0, getDayNumber(today, s.tripStart) - 1)
     const [dayOffset, setDayOffset] = useState<number>(initialOffset)
@@ -47,7 +46,6 @@ export default function Home() {
     const tripDayReceipts = receipts.filter(r => r.date === displayDate)
     const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
-  const budgetUsed = Math.round((tripTotal / s.budget) * 100)
   const split = calcSplit(receipts, s.user1, s.user2)
 
   // 鍵盤左右鍵與 Home 支援
@@ -87,9 +85,9 @@ export default function Home() {
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <div className="card">
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>今日支出</div>
-            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{todayTotal.toLocaleString()}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 2 }}>≈ NT${toTWD(todayTotal, s.exchangeRate).toLocaleString()}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>當日支出</div>
+            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripDayTotal.toLocaleString()}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 2 }}>≈ NT${toTWD(tripDayTotal, s.exchangeRate).toLocaleString()}</div>
           </div>
           <div className="card">
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅程累計</div>
