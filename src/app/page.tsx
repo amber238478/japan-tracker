@@ -26,11 +26,15 @@ export default function Home() {
   const s = getSettings()
   const today = new Date().toISOString().split('T')[0]
   const displayDate = s.tripStart ?? today
-  const todayReceipts = receipts.filter(r => r.date === today)
-  const todayTotal = todayReceipts.reduce((a, r) => a + r.amountJPY, 0)
+  // 計算當前是旅程第幾日（以 today 為基準），並求出那一天的日期字串
+  const dayNum = getDayNumber(today, s.tripStart)
+  const tripDayDateObj = new Date(s.tripStart)
+  tripDayDateObj.setDate(tripDayDateObj.getDate() + (dayNum - 1))
+  const tripDayDate = tripDayDateObj.toISOString().split('T')[0]
+  const tripDayReceipts = receipts.filter(r => r.date === tripDayDate)
+  const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
   const budgetUsed = Math.round((tripTotal / s.budget) * 100)
-  const dayNum = getDayNumber(displayDate, s.tripStart)
   const split = calcSplit(receipts, s.user1, s.user2)
 
   return (
@@ -81,16 +85,16 @@ export default function Home() {
           </div>
         )}
 
-        {/* Today's records */}
-        <div className="section-label">今日花費</div>
+        {/* Trip day records */}
+        <div className="section-label">旅程第 {dayNum > 0 ? dayNum : '—'} 日花費</div>
         {loading && <div style={{ color: 'var(--text-muted)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>載入中...</div>}
-        {!loading && todayReceipts.length === 0 && (
+        {!loading && tripDayReceipts.length === 0 && (
           <div style={{ color: 'var(--text-hint)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>
-            今天還沒有記錄<br />
+            目前第 {dayNum > 0 ? dayNum : '—'} 日沒有記錄<br />
             <Link href="/scan" style={{ color: 'var(--accent)', marginTop: 8, display: 'inline-block' }}>掃描收據 →</Link>
           </div>
         )}
-        {todayReceipts.map((r, i) => (
+        {tripDayReceipts.map((r, i) => (
           <div key={i} className="card" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
             <div className={`avatar ${r.paidBy === s.user1 ? 'avatar-1' : 'avatar-2'}`}>
               {(r.paidBy || s.user1).charAt(0)}
