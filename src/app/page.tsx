@@ -57,6 +57,17 @@ export default function Home() {
       d.setDate(d.getDate() + i)
       return { day: i + 1, date: d.toISOString().split('T')[0] }
     })
+    const [showDayMenu, setShowDayMenu] = useState(false)
+    const menuRef = useRef<HTMLDivElement | null>(null)
+    useEffect(() => {
+      const onDocClick = (e: MouseEvent) => {
+        if (!menuRef.current) return
+        if (!(e.target instanceof Node)) return
+        if (!menuRef.current.contains(e.target)) setShowDayMenu(false)
+      }
+      document.addEventListener('click', onDocClick)
+      return () => document.removeEventListener('click', onDocClick)
+    }, [])
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
   const split = calcSplit(receipts, s.user1, s.user2)
 
@@ -88,12 +99,22 @@ export default function Home() {
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
               <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
-              <select aria-label="select trip day" value={String(dayOffset)} onChange={e => setDayOffset(Number(e.target.value))}
-                style={{ marginLeft: 8, padding: '6px 8px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 12 }}>
-                {tripDaysArray.map(d => (
-                  <option key={d.day} value={String(d.day - 1)}>DAY {d.day} · {d.date}</option>
-                ))}
-              </select>
+              <div ref={menuRef} style={{ position: 'relative', marginLeft: 8 }}>
+                <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
+                  style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 12, cursor: 'pointer' }}>
+                  DAY {dayOffset + 1} · {tripDaysArray[dayOffset]?.date}
+                </button>
+                {showDayMenu && (
+                  <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50 }}>
+                    {tripDaysArray.map(d => (
+                      <div key={d.day} onClick={() => { setDayOffset(d.day - 1); setShowDayMenu(false) }}
+                        style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        DAY {d.day} · {d.date}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
