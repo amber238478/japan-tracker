@@ -1,34 +1,83 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useRef, useState } from 'react'
 
 export default function BottomNav() {
   const path = usePathname()
+  const router = useRouter()
+  const fileRef = useRef<HTMLInputElement | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const handleFile = async (file: File) => {
+    setBusy(true)
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string
+      const base64 = dataUrl.split(',')[1]
+      const mimeType = file.type
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64, mimeType })
+        })
+        const data = await res.json()
+        if (data.success) {
+          sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
+          router.push('/scan/confirm')
+        } else {
+          alert('辨識失敗，請重試或使用上傳頁面')
+        }
+      } catch (err) {
+        console.error(err)
+        alert('網路錯誤，請稍後重試')
+      } finally {
+        setBusy(false)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   return (
-    <nav className="bottom-nav">
-      <Link href="/" className={`nav-item ${path === '/' ? 'active' : ''}`}>
-        <span className="nav-icon">⌂</span>
-        <span>首頁</span>
-      </Link>
-      <Link href="/history" className={`nav-item ${path === '/history' ? 'active' : ''}`}>
-        <span className="nav-icon">≡</span>
-        <span>紀錄</span>
-      </Link>
-      <Link href="/scan" className="nav-item">
-        <div className="scan-fab">
-          <span>◎</span>
+    <>
+      <nav className="bottom-nav">
+        <Link href="/" className={`nav-item ${path === '/' ? 'active' : ''}`}>
+          <span className="nav-icon">⌂</span>
+          <span>首頁</span>
+        </Link>
+        <Link href="/history" className={`nav-item ${path === '/history' ? 'active' : ''}`}>
+          <span className="nav-icon">≡</span>
+          <span>紀錄</span>
+        </Link>
+        <div className="nav-item">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+          />
+          <button
+            onClick={() => !busy && fileRef.current?.click()}
+            className="scan-fab"
+            aria-label="開啟相機掃描"
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+          >
+            <span>◎</span>
+          </button>
+          <span>掃描</span>
         </div>
-        <span>掃描</span>
-      </Link>
-      <Link href="/stats" className={`nav-item ${path === '/stats' ? 'active' : ''}`}>
-        <span className="nav-icon">◫</span>
-        <span>統計</span>
-      </Link>
-      <Link href="/split" className={`nav-item ${path === '/split' ? 'active' : ''}`}>
-        <span className="nav-icon">⇌</span>
-        <span>分帳</span>
-      </Link>
-    </nav>
+        <Link href="/stats" className={`nav-item ${path === '/stats' ? 'active' : ''}`}>
+          <span className="nav-icon">◫</span>
+          <span>統計</span>
+        </Link>
+        <Link href="/split" className={`nav-item ${path === '/split' ? 'active' : ''}`}>
+          <span className="nav-icon">⇌</span>
+          <span>分帳</span>
+        </Link>
+      </nav>
+    </>
   )
 }
