@@ -5,9 +5,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   exchangeRate: 0.206,
   tripDays: 8,
   tripStart: '2026-11-01',
-  tripName: '九州之旅',
-  user1: 'Amber',
-  user2: '男友',
+  tripName: '東京之旅',
+  user1: '我',
+  user2: '飛飛',
 }
 
 export function getSettings(): AppSettings {

@@ -12,7 +12,7 @@ export default function AddPage() {
   const s = getSettings()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
-    items: '', storeName: '', amountJPY: '',
+    items: '', storeName: '', amount: '', currency: 'JPY' as 'JPY' | 'TWD',
     category: '餐飲' as Category, paymentMethod: '現金' as PaymentMethod,
     date: new Date().toISOString().split('T')[0],
     paidBy: s.user1, splitWith: null as string | null, splitRatio: 0.5, notes: '',
@@ -22,13 +22,16 @@ export default function AddPage() {
   const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }))
 
   const save = async () => {
-    if (!form.items || !form.amountJPY) return alert('請填寫品項和金額')
+    if (!form.items || !form.amount) return alert('請填寫品項和金額')
     setSaving(true)
     try {
+      // 計算要送到後端的日幣金額
+      const amountNum = Number(form.amount)
+      const amountJPY = form.currency === 'JPY' ? Math.round(amountNum) : Math.round(amountNum / s.exchangeRate)
       await fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, amountJPY: Number(form.amountJPY) })
+        body: JSON.stringify({ ...form, amountJPY })
       })
       router.push('/')
     } catch {
@@ -57,8 +60,15 @@ export default function AddPage() {
 
         <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>金額（日幣）*</div>
-            <input type="number" value={form.amountJPY} onChange={e => set('amountJPY', e.target.value)} placeholder="0" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>金額 *</div>
+              <select value={form.currency} onChange={e => set('currency', e.target.value)} style={{ fontSize: 12 }}>
+                <option value="JPY">JPY</option>
+                <option value="TWD">TWD</option>
+              </select>
+            </div>
+            <input type="number" value={form.amount} onChange={e => set('amount', e.target.value)} placeholder="0" />
+            {form.currency === 'TWD' && <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 6 }}>會使用匯率 {s.exchangeRate} 轉換為日幣儲存</div>}
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>日期</div>
