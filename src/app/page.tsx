@@ -25,10 +25,15 @@ export default function Home() {
 
   const s = getSettings()
   const today = new Date().toISOString().split('T')[0]
-  // 計算當前是旅程第幾日（以 today 為基準），並求出那一天的日期字串
-    const initialOffset = Math.max(0, getDayNumber(today, s.tripStart) - 1)
-    const [dayOffset, setDayOffset] = useState<number>(initialOffset)
-    const touchStartX = useRef<number | null>(null)
+  // 檢查 today 是否在 trip 範圍內，若不在就顯示真實的 today 並把 Day 顯示成「—」
+  const tripStartObj = new Date(s.tripStart)
+  const tripEndObj = new Date(s.tripStart)
+  tripEndObj.setDate(tripEndObj.getDate() + s.tripDays - 1)
+  const todayObj = new Date(today)
+  const inRange = todayObj >= tripStartObj && todayObj <= tripEndObj
+  const initialOffset = inRange ? Math.max(0, getDayNumber(today, s.tripStart) - 1) : 0
+  const [dayOffset, setDayOffset] = useState<number>(initialOffset)
+  const touchStartX = useRef<number | null>(null)
     const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
     const handleTouchEnd = (e: React.TouchEvent) => {
       if (touchStartX.current === null) return
@@ -41,8 +46,9 @@ export default function Home() {
     }
     const displayDateObj = new Date(s.tripStart)
     displayDateObj.setDate(displayDateObj.getDate() + dayOffset)
-    const displayDate = displayDateObj.toISOString().split('T')[0]
-    const dayNum = dayOffset + 1
+    const tripDisplayDate = displayDateObj.toISOString().split('T')[0]
+    const displayDate = inRange ? tripDisplayDate : today
+    const dayNum = inRange ? dayOffset + 1 : 0
     const tripDayReceipts = receipts.filter(r => r.date === displayDate)
     const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
@@ -69,10 +75,10 @@ export default function Home() {
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button aria-label="previous day" onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={dayOffset <= 0}
+              <button aria-label="previous day" onClick={() => setDayOffset(d => Math.max(0, d - 1))} disabled={!inRange || dayOffset <= 0}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset <= 0 ? 'default' : 'pointer', color: dayOffset <= 0 ? 'var(--text-muted)' : 'var(--text-primary)' }}>‹</button>
               <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
-              <button aria-label="next day" onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={dayOffset >= s.tripDays - 1}
+              <button aria-label="next day" onClick={() => setDayOffset(d => Math.min(d + 1, s.tripDays - 1))} disabled={!inRange || dayOffset >= s.tripDays - 1}
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
               <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
