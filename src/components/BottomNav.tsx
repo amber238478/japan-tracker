@@ -1,11 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 export default function BottomNav() {
   const path = usePathname()
   const router = useRouter()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
 
   const handleFile = async (file: File) => {
@@ -51,16 +52,22 @@ export default function BottomNav() {
         </Link>
         <div className="nav-item">
           <input
-            id="scan-input"
+            ref={fileRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            capture
             style={{ display: 'none' }}
             onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
-          <label htmlFor="scan-input" className="scan-fab" aria-label="開啟相機掃描" style={{ cursor: 'pointer' }}>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="scan-fab"
+            aria-label="開啟相機掃描"
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+            disabled={busy}
+          >
             <span>◎</span>
-          </label>
+          </button>
           <span>掃描</span>
         </div>
         <Link href="/stats" className={`nav-item ${path === '/stats' ? 'active' : ''}`}>
