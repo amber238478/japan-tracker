@@ -93,22 +93,15 @@ export default function Home() {
             DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
           </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button aria-label="previous day" onClick={() => { setShowRealToday(false); setDayOffset(d => Math.max(0, d - 1)) }} disabled={showRealToday || dayOffset <= 0}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset <= 0 ? 'default' : 'pointer', color: dayOffset <= 0 ? 'var(--text-muted)' : 'var(--text-primary)' }}>‹</button>
-              <div style={{ fontSize: 22, fontWeight: 500 }}>{displayDate}</div>
-              <button aria-label="next day" onClick={() => { setShowRealToday(false); setDayOffset(d => Math.min(d + 1, s.tripDays - 1)) }} disabled={showRealToday || dayOffset >= s.tripDays - 1}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
-              <button aria-label="today" onClick={() => { setShowRealToday(true); }}
-                style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
-              <div ref={menuRef} style={{ position: 'relative', marginLeft: 8 }}>
+              <div ref={menuRef} style={{ position: 'relative' }}>
                 <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
-                  style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 12, cursor: 'pointer' }}>
-                  DAY {dayOffset + 1} · {tripDaysArray[dayOffset]?.date}
+                  style={{ padding: '6px 10px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 16, cursor: 'pointer' }}>
+                  {showRealToday ? `今天 · ${today}` : `DAY ${dayNum > 0 ? dayNum : '—'} · ${tripDisplayDate}`}
                 </button>
                 {showDayMenu && (
                   <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50 }}>
-                        {tripDaysArray.map(d => (
-                          <div key={d.day} onClick={() => { setShowRealToday(false); setDayOffset(d.day - 1); setShowDayMenu(false) }}
+                    {tripDaysArray.map(d => (
+                      <div key={d.day} onClick={() => { setShowRealToday(false); setDayOffset(d.day - 1); setShowDayMenu(false) }}
                         style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         DAY {d.day} · {d.date}
                       </div>
@@ -116,6 +109,8 @@ export default function Home() {
                   </div>
                 )}
               </div>
+              <button aria-label="today" onClick={() => { setShowRealToday(true); setShowDayMenu(false) }}
+                style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
             </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
