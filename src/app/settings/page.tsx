@@ -20,7 +20,8 @@ export default function SettingsPage() {
   }
 
   const reportBug = useCallback(async () => {
-    await exportReport()
+    const include = window.confirm('要包含螢幕截圖嗎？系統會要求你分享畫面以擷取影像。')
+    await exportReport(include)
   }, [])
 
   return (
