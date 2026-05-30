@@ -51,6 +51,12 @@ export default function Home() {
     const dayNum = inRange ? dayOffset + 1 : 0
     const tripDayReceipts = receipts.filter(r => r.date === displayDate)
     const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
+    // 建立旅程日期選單資料
+    const tripDaysArray = Array.from({ length: s.tripDays }, (_, i) => {
+      const d = new Date(s.tripStart)
+      d.setDate(d.getDate() + i)
+      return { day: i + 1, date: d.toISOString().split('T')[0] }
+    })
   const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
   const split = calcSplit(receipts, s.user1, s.user2)
 
@@ -82,6 +88,13 @@ export default function Home() {
                 style={{ background: 'none', border: 'none', fontSize: 20, cursor: dayOffset >= s.tripDays - 1 ? 'default' : 'pointer', color: dayOffset >= s.tripDays - 1 ? 'var(--text-muted)' : 'var(--text-primary)' }}>›</button>
               <button aria-label="today" onClick={() => setDayOffset(initialOffset)}
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
+              <select aria-label="select trip day" value={inRange ? dayOffset : ''} onChange={e => setDayOffset(Number(e.target.value))}
+                disabled={!inRange}
+                style={{ marginLeft: 8, padding: '6px 8px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'white', fontSize: 12 }}>
+                {tripDaysArray.map(d => (
+                  <option key={d.day} value={d.day - 1}>DAY {d.day} · {d.date}</option>
+                ))}
+              </select>
             </div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
