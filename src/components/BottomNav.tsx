@@ -63,7 +63,7 @@ export default function BottomNav() {
             onClick={() => fileRef.current?.click()}
             className="scan-fab"
             aria-label="開啟相機掃描"
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+            style={{ cursor: 'pointer' }}
             disabled={busy}
           >
             <span>◎</span>
