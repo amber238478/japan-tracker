@@ -113,7 +113,7 @@ export default function Home() {
                 style={{ marginLeft: 6, fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
             </div>
         </div>
-        <Link href="/settings" style={{ color: 'var(--text-muted)', fontSize: 22 }}>⚙</Link>
+        <Link href="/settings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 16 }}>⚙</Link>
       </div>
 
       <div className="page">
