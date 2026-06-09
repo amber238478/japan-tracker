@@ -21,7 +21,7 @@ export default function ClientLogger() {
     console.warn = wrap('warn', origConsole.warn)
     console.error = wrap('error', origConsole.error)
     // expose a helper to get logs
-    (window as any).getAppLogs = () => (window as any).__appLogs || []
+    ;(window as any).getAppLogs = () => (window as any).__appLogs || []
     return () => {
       try {
         console.log = origConsole.log
