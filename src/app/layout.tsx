@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ClientLogger from '@/components/ClientLogger'
-import FloatingReportButton from '@/components/FloatingReportButton'
 
 export const metadata: Metadata = {
   title: '旅行記帳',
@@ -33,7 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ClientLogger />
         {children}
-        <FloatingReportButton />
       </body>
     </html>
   )
