@@ -87,34 +87,33 @@ export default function Home() {
     <main>
       {/* Header */}
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
-        style={{ padding: '20px 16px 8px' }}>
-        {/* Top: centered trip label */}
+        style={{ padding: '20px 16px 8px', position: 'relative' }}>
+        {/* Settings - top right */}
+        <Link href="/settings" style={{ position: 'absolute', top: 20, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 16 }}>⚙</Link>
+        {/* Centered trip label */}
         <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>
           DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
         </div>
-        {/* Bottom row: buttons + settings */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div ref={menuRef} style={{ position: 'relative' }}>
-              <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
-                style={{ padding: '4px 8px', borderRadius: 10, border: '0.5px solid var(--border)', background: 'white', fontSize: 13, fontFamily: 'inherit', color: 'var(--accent)', cursor: 'pointer' }}>
-                {showRealToday ? `今天 · ${today}` : `DAY ${dayNum > 0 ? dayNum : '—'} · ${tripDisplayDate}`}
-              </button>
-              {showDayMenu && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50 }}>
-                  {tripDaysArray.map(d => (
-                    <div key={d.day} onClick={() => { setShowRealToday(false); setDayOffset(d.day - 1); setShowDayMenu(false) }}
-                      style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      DAY {d.day} · {d.date}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button aria-label="today" onClick={() => { setShowRealToday(true); setShowDayMenu(false) }}
-              style={{ fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
+        {/* Centered buttons */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+          <div ref={menuRef} style={{ position: 'relative' }}>
+            <button onClick={() => setShowDayMenu(s => !s)} aria-haspopup="true" aria-expanded={showDayMenu}
+              style={{ padding: '4px 8px', borderRadius: 10, border: '0.5px solid var(--border)', background: 'white', fontSize: 13, fontFamily: 'inherit', color: 'var(--accent)', cursor: 'pointer' }}>
+              {showRealToday ? `今天 · ${today}` : `DAY ${dayNum > 0 ? dayNum : '—'} · ${tripDisplayDate}`}
+            </button>
+            {showDayMenu && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50 }}>
+                {tripDaysArray.map(d => (
+                  <div key={d.day} onClick={() => { setShowRealToday(false); setDayOffset(d.day - 1); setShowDayMenu(false) }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    DAY {d.day} · {d.date}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <Link href="/settings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 16 }}>⚙</Link>
+          <button aria-label="today" onClick={() => { setShowRealToday(true); setShowDayMenu(false) }}
+            style={{ fontSize: 12, padding: '6px 10px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}>今天</button>
         </div>
       </div>
 
