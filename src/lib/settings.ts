@@ -2,7 +2,7 @@ import { AppSettings } from './types'
 
 const DEFAULT_SETTINGS: AppSettings = {
   budget: 100000,
-  exchangeRate: 0.206,
+  exchangeRate: 0.21,
   tripDays: 8,
   tripStart: '2026-06-26',
   tripName: '東京之旅',
