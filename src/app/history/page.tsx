@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import { getSettings } from '@/lib/settings'
 import { Receipt } from '@/lib/types'
@@ -10,6 +11,7 @@ const TAG_MAP: Record<string, string> = {
 }
 
 export default function HistoryPage() {
+  const router = useRouter()
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
   const s = getSettings()
@@ -74,7 +76,8 @@ export default function HistoryPage() {
                 </div>
               </div>
               {items.map((r, i) => (
-                <div key={i} className="card" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div key={i} className="card" onClick={() => router.push(`/edit/${r.notionId}`)}
+                  style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <div className={`avatar ${r.paidBy === s.user1 ? 'avatar-1' : 'avatar-2'}`}>
                     {(r.paidBy || s.user1).charAt(0)}
                   </div>
@@ -89,7 +92,7 @@ export default function HistoryPage() {
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
                   </div>
-                  <button onClick={() => deleteItem(r)} style={{ background: 'none', border: 'none', color: 'var(--text-hint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 4px' }}>×</button>
+                  <button onClick={(e) => { e.stopPropagation(); deleteItem(r) }} style={{ background: 'none', border: 'none', color: 'var(--text-hint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 4px' }}>×</button>
                 </div>
               ))}
             </div>
