@@ -20,8 +20,13 @@ export function getSettings(): AppSettings {
   }
 }
 
-export function saveSettings(settings: AppSettings) {
-  localStorage.setItem('japan-tracker-settings', JSON.stringify(settings))
+export function saveSettings(settings: AppSettings): boolean {
+  try {
+    localStorage.setItem('japan-tracker-settings', JSON.stringify(settings))
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function toTWD(jpy: number, rate?: number): number {

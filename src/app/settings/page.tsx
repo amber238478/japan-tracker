@@ -14,7 +14,12 @@ export default function SettingsPage() {
   const set = (key: keyof AppSettings, val: any) => setForm(f => ({ ...f, [key]: val }))
 
   const save = () => {
-    saveSettings(form)
+    const ok = saveSettings(form)
+    const verified = ok && getSettings().user1 === form.user1 && getSettings().user2 === form.user2
+    if (!verified) {
+      alert('儲存失敗：瀏覽器封鎖了本地儲存（常見於無痕模式或隱私設定過嚴），請改用一般瀏覽模式再試一次')
+      return
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
