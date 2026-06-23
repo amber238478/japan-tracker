@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import { getSettings } from '@/lib/settings'
+import { buildTripReport } from '@/lib/tripReport'
 import { Receipt, Category, Currency } from '@/lib/types'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
@@ -44,10 +45,28 @@ export default function StatsPage() {
   const jpyStats = buildStats(receipts, 'JPY')
   const twdStats = buildStats(receipts, 'TWD')
 
+  const shareReport = async () => {
+    const text = buildTripReport(receipts, s)
+    if (navigator.share) {
+      try { await navigator.share({ title: `${s.tripName} 旅行報表`, text }) } catch {}
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      alert('報表已複製到剪貼簿')
+    } catch {
+      alert('複製失敗，請手動截圖分享')
+    }
+  }
+
   return (
     <main>
-      <div style={{ padding: '20px 16px 12px' }}>
+      <div style={{ padding: '20px 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 500 }}>統計分析</div>
+        <button onClick={shareReport} disabled={receipts.length === 0}
+          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', opacity: receipts.length === 0 ? 0.5 : 1 }}>
+          📤 分享報表
+        </button>
       </div>
 
       <div className="page">
