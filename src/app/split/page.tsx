@@ -1,9 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, toTWD } from '@/lib/settings'
+import { getSettings } from '@/lib/settings'
 import { calcSplit } from '@/lib/split'
-import { Receipt } from '@/lib/types'
+import { CurrencySplitSummary, Receipt } from '@/lib/types'
 
 export default function SplitPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
@@ -18,6 +18,7 @@ export default function SplitPage() {
 
   const split = calcSplit(receipts, s.user1, s.user2)
   const splitReceipts = receipts.filter(r => r.splitWith)
+  const currencies = (['JPY', 'TWD'] as const).filter(c => splitReceipts.some(r => r.currency === c))
 
   return (
     <main>
@@ -28,36 +29,55 @@ export default function SplitPage() {
 
       <div className="page">
         {/* Result */}
-        <div style={{ background: Math.abs(split.balance) < 100 ? 'var(--green-bg)' : 'var(--bg-warm)', border: '0.5px solid', borderColor: Math.abs(split.balance) < 100 ? '#C0DD97' : 'var(--accent-border)', borderLeft: `3px solid ${Math.abs(split.balance) < 100 ? 'var(--green)' : 'var(--accent)'}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>結算結果</div>
-          <div style={{ fontSize: 18, fontWeight: 500, color: Math.abs(split.balance) < 100 ? 'var(--green)' : 'var(--accent)' }}>
-            {split.oweText}
+        {currencies.length === 0 && !loading && (
+          <div style={{ background: 'var(--green-bg)', border: '0.5px solid #C0DD97', borderLeft: '3px solid var(--green)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>結算結果</div>
+            <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--green)' }}>還沒有分帳記錄</div>
           </div>
-          {Math.abs(split.balance) >= 100 && (
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-              ≈ NT${toTWD(Math.abs(split.balance), s.exchangeRate).toLocaleString()}
+        )}
+        {currencies.map(c => {
+          const cs = split[c]
+          const symbol = c === 'JPY' ? '¥' : 'NT$'
+          const threshold = c === 'JPY' ? 100 : 30
+          const settled = Math.abs(cs.balance) < threshold
+          return (
+            <div key={c} style={{ background: settled ? 'var(--green-bg)' : 'var(--bg-warm)', border: '0.5px solid', borderColor: settled ? '#C0DD97' : 'var(--accent-border)', borderLeft: `3px solid ${settled ? 'var(--green)' : 'var(--accent)'}`, borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>結算結果 · {c}</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: settled ? 'var(--green)' : 'var(--accent)' }}>
+                {cs.oweText}
+              </div>
             </div>
-          )}
-        </div>
+          )
+        })}
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-          {[
-            { name: s.user1, paid: split.user1Paid, should: split.user1Should, cls: 'avatar-1' },
-            { name: s.user2, paid: split.user2Paid, should: split.user2Should, cls: 'avatar-2' },
-          ].map(u => (
-            <div key={u.name} className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div className={`avatar ${u.cls}`}>{u.name.charAt(0)}</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{u.name}</div>
+        {currencies.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            {[
+              { name: s.user1, cls: 'avatar-1', key: 'user1Paid' as const, shouldKey: 'user1Should' as const },
+              { name: s.user2, cls: 'avatar-2', key: 'user2Paid' as const, shouldKey: 'user2Should' as const },
+            ].map(u => (
+              <div key={u.name} className="card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <div className={`avatar ${u.cls}`}>{u.name.charAt(0)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{u.name}</div>
+                </div>
+                {currencies.map(c => {
+                  const cs: CurrencySplitSummary = split[c]
+                  const symbol = c === 'JPY' ? '¥' : 'NT$'
+                  return (
+                    <div key={c} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>實際付出（{c}）</div>
+                      <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>{symbol}{cs[u.key].toLocaleString()}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>應付金額（{c}）</div>
+                      <div style={{ fontSize: 16, fontWeight: 500 }}>{symbol}{cs[u.shouldKey].toLocaleString()}</div>
+                    </div>
+                  )
+                })}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>實際付出</div>
-              <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>¥{u.paid.toLocaleString()}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>應付金額</div>
-              <div style={{ fontSize: 16, fontWeight: 500 }}>¥{u.should.toLocaleString()}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Split records */}
         <div className="section-label">分帳明細（{splitReceipts.length} 筆）</div>
@@ -68,9 +88,10 @@ export default function SplitPage() {
           </div>
         )}
         {splitReceipts.map((r, i) => {
+          const symbol = r.currency === 'TWD' ? 'NT$' : '¥'
           const paidByUser1 = r.paidBy === s.user1
-          const u1amt = paidByUser1 ? Math.round(r.amountJPY * r.splitRatio) : Math.round(r.amountJPY * (1 - r.splitRatio))
-          const u2amt = r.amountJPY - u1amt
+          const u1amt = paidByUser1 ? Math.round(r.amount * r.splitRatio) : Math.round(r.amount * (1 - r.splitRatio))
+          const u2amt = r.amount - u1amt
           return (
             <div key={i} className="card" style={{ marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -79,7 +100,7 @@ export default function SplitPage() {
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{r.date} · {r.storeName || r.category}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>¥{r.amountJPY.toLocaleString()}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{symbol}{r.amount.toLocaleString()}</div>
                   <div style={{ fontSize: 11, color: 'var(--accent)' }}>{r.paidBy} 付</div>
                 </div>
               </div>
@@ -87,7 +108,7 @@ export default function SplitPage() {
                 {[[s.user1, u1amt], [s.user2, u2amt]].map(([name, amt]) => (
                   <div key={name as string} style={{ flex: 1, background: 'var(--bg-surface)', borderRadius: 6, padding: '6px 8px', fontSize: 11 }}>
                     <span style={{ color: 'var(--text-muted)' }}>{name as string}</span>
-                    <span style={{ float: 'right', fontWeight: 500 }}>¥{(amt as number).toLocaleString()}</span>
+                    <span style={{ float: 'right', fontWeight: 500 }}>{symbol}{(amt as number).toLocaleString()}</span>
                   </div>
                 ))}
               </div>

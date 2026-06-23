@@ -19,6 +19,8 @@ export default function ConfirmPage() {
     const data = JSON.parse(raw)
     setForm({
       ...data,
+      amount: data.amountJPY ?? data.amount ?? 0,
+      currency: 'JPY',
       paidBy: s.user1,
       splitWith: null,
       splitRatio: 0.5,
@@ -74,7 +76,7 @@ export default function ConfirmPage() {
         <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>金額（日幣）</div>
-            <input type="number" value={form.amountJPY ?? ''} onChange={e => set('amountJPY', Number(e.target.value))} placeholder="0" />
+            <input type="number" value={form.amount ?? ''} onChange={e => set('amount', Number(e.target.value))} placeholder="0" />
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>日期</div>
@@ -158,8 +160,8 @@ export default function ConfirmPage() {
                 style={{ width: '100%' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-hint)', marginTop: 4 }}>
-                <span>{form.paidBy}: ¥{Math.round((form.amountJPY ?? 0) * (form.splitRatio ?? 0.5)).toLocaleString()}</span>
-                <span>{form.splitWith}: ¥{Math.round((form.amountJPY ?? 0) * (1 - (form.splitRatio ?? 0.5))).toLocaleString()}</span>
+                <span>{form.paidBy}: ¥{Math.round((form.amount ?? 0) * (form.splitRatio ?? 0.5)).toLocaleString()}</span>
+                <span>{form.splitWith}: ¥{Math.round((form.amount ?? 0) * (1 - (form.splitRatio ?? 0.5))).toLocaleString()}</span>
               </div>
             </div>
           )}

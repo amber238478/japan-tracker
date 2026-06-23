@@ -25,13 +25,11 @@ export default function AddPage() {
     if (!form.items || !form.amount) return alert('請填寫品項和金額')
     setSaving(true)
     try {
-      // 計算要送到後端的日幣金額
-      const amountNum = Number(form.amount)
-      const amountJPY = form.currency === 'JPY' ? Math.round(amountNum) : Math.round(amountNum / s.exchangeRate)
+      const amount = Math.round(Number(form.amount))
       await fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, amountJPY })
+        body: JSON.stringify({ ...form, amount, currency: form.currency })
       })
       router.push('/')
     } catch {
@@ -68,7 +66,6 @@ export default function AddPage() {
               </select>
             </div>
             <input type="number" value={form.amount} onChange={e => set('amount', e.target.value)} placeholder="0" />
-            {form.currency === 'TWD' && <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 6 }}>會使用匯率 {s.exchangeRate} 轉換為日幣儲存</div>}
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>日期</div>

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, toTWD, getDayNumber } from '@/lib/settings'
+import { getSettings, getDayNumber } from '@/lib/settings'
 import { calcSplit } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 
@@ -51,7 +51,8 @@ export default function Home() {
     const displayDate = showRealToday ? today : tripDisplayDate
     const dayNum = showRealToday ? 0 : dayOffset + 1
     const tripDayReceipts = receipts.filter(r => r.date === displayDate)
-    const tripDayTotal = tripDayReceipts.reduce((a, r) => a + r.amountJPY, 0)
+    const tripDayJPY = tripDayReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+    const tripDayTWD = tripDayReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
     // 建立旅程日期選單資料
     const tripDaysArray = Array.from({ length: s.tripDays }, (_, i) => {
       const d = new Date(s.tripStart)
@@ -69,7 +70,8 @@ export default function Home() {
       document.addEventListener('click', onDocClick)
       return () => document.removeEventListener('click', onDocClick)
     }, [])
-  const tripTotal = receipts.reduce((a, r) => a + r.amountJPY, 0)
+  const tripJPY = receipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+  const tripTWD = receipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
   const split = calcSplit(receipts, s.user1, s.user2)
 
   // 鍵盤左右鍵與 Home 支援
@@ -122,23 +124,24 @@ export default function Home() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <div className="card">
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>當日支出</div>
-            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripDayTotal.toLocaleString()}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 2 }}>≈ NT${toTWD(tripDayTotal, s.exchangeRate).toLocaleString()}</div>
+            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripDayJPY.toLocaleString()}</div>
+            {tripDayTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
           </div>
           <div className="card">
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅程累計</div>
-            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripTotal.toLocaleString()}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 2 }}>≈ NT${toTWD(tripTotal, s.exchangeRate).toLocaleString()}</div>
+            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
+            {tripTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
           </div>
         </div>
 
         {/* Budget removed per request */}
 
         {/* Split summary */}
-        {Math.abs(split.balance) >= 100 && (
+        {(Math.abs(split.JPY.balance) >= 100 || Math.abs(split.TWD.balance) >= 30) && (
           <div style={{ background: 'var(--bg-warm)', border: '0.5px solid var(--accent-border)', borderRadius: 10, padding: '10px 14px', marginBottom: 14, borderLeft: '2px solid var(--accent)' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>分帳摘要</div>
-            <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>{split.oweText}</div>
+            {Math.abs(split.JPY.balance) >= 100 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>{split.JPY.oweText}</div>}
+            {Math.abs(split.TWD.balance) >= 30 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>{split.TWD.oweText}</div>}
           </div>
         )}
 
@@ -164,8 +167,7 @@ export default function Home() {
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>¥{r.amountJPY.toLocaleString()}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>NT${toTWD(r.amountJPY, s.exchangeRate).toLocaleString()}</div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
             </div>
           </div>
         ))}

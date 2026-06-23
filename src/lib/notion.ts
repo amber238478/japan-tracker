@@ -19,13 +19,15 @@ export async function getReceipts(): Promise<Receipt[]> {
     for (const page of res.results) {
       if (page.object !== 'page') continue
       const p = (page as any).properties
+      const currency = p['幣別']?.select?.name === 'TWD' ? 'TWD' : 'JPY'
       results.push({
         notionId: page.id,
         storeName: p['商店名稱']?.rich_text?.[0]?.plain_text ?? '',
         storeNameJa: p['商店日文']?.rich_text?.[0]?.plain_text ?? '',
         items: p['項目']?.title?.[0]?.plain_text ?? '',
         itemsJa: p['商品日文']?.rich_text?.[0]?.plain_text ?? '',
-        amountJPY: p['金額JPY']?.number ?? 0,
+        amount: currency === 'TWD' ? (p['金額TWD']?.number ?? 0) : (p['金額JPY']?.number ?? 0),
+        currency,
         category: p['類別']?.select?.name ?? '其他',
         paymentMethod: p['支付方式']?.select?.name ?? '現金',
         date: p['日期']?.date?.start ?? '',
@@ -44,6 +46,7 @@ export async function getReceipts(): Promise<Receipt[]> {
 }
 
 export async function addReceipt(r: Receipt): Promise<string> {
+  const currency = r.currency ?? 'JPY'
   const page = await notion.pages.create({
     parent: { database_id: DB_ID },
     properties: {
@@ -52,7 +55,9 @@ export async function addReceipt(r: Receipt): Promise<string> {
       '商店日文': { rich_text: [{ text: { content: r.storeNameJa } }] },
       '商品日文': { rich_text: [{ text: { content: r.itemsJa } }] },
       '日期': { date: { start: r.date } },
-      '金額JPY': { number: r.amountJPY },
+      '幣別': { select: { name: currency } },
+      '金額JPY': { number: currency === 'JPY' ? r.amount : 0 },
+      '金額TWD': { number: currency === 'TWD' ? r.amount : 0 },
       '類別': { select: { name: r.category } },
       '支付方式': { select: { name: r.paymentMethod } },
       '地區': { rich_text: [{ text: { content: r.region } }] },
@@ -69,7 +74,11 @@ export async function updateReceipt(notionId: string, r: Partial<Receipt>) {
   const props: any = {}
   if (r.items !== undefined) props['項目'] = { title: [{ text: { content: r.items } }] }
   if (r.storeName !== undefined) props['商店名稱'] = { rich_text: [{ text: { content: r.storeName } }] }
-  if (r.amountJPY !== undefined) props['金額JPY'] = { number: r.amountJPY }
+  if (r.amount !== undefined && r.currency !== undefined) {
+    props['幣別'] = { select: { name: r.currency } }
+    props['金額JPY'] = { number: r.currency === 'JPY' ? r.amount : 0 }
+    props['金額TWD'] = { number: r.currency === 'TWD' ? r.amount : 0 }
+  }
   if (r.category !== undefined) props['類別'] = { select: { name: r.category } }
   if (r.paymentMethod !== undefined) props['支付方式'] = { select: { name: r.paymentMethod } }
   if (r.date !== undefined) props['日期'] = { date: { start: r.date } }

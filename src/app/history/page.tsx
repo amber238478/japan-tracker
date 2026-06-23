@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, toTWD } from '@/lib/settings'
+import { getSettings } from '@/lib/settings'
 import { Receipt } from '@/lib/types'
 
 const TAG_MAP: Record<string, string> = {
@@ -20,7 +20,8 @@ export default function HistoryPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const total = receipts.reduce((a, r) => a + r.amountJPY, 0)
+  const totalJPY = receipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+  const totalTWD = receipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
 
   // Group by date
   const grouped: Record<string, Receipt[]> = {}
@@ -48,8 +49,9 @@ export default function HistoryPage() {
       <div style={{ margin: '0 16px 14px' }}>
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅行總支出</div>
-          <div style={{ fontSize: 26, fontWeight: 500 }}>¥{total.toLocaleString()}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>≈ NT${toTWD(total, s.exchangeRate).toLocaleString()} · {receipts.length} 筆</div>
+          <div style={{ fontSize: 26, fontWeight: 500 }}>¥{totalJPY.toLocaleString()}</div>
+          {totalTWD > 0 && <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)' }}>NT${totalTWD.toLocaleString()}</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>{receipts.length} 筆</div>
         </div>
       </div>
 
@@ -57,7 +59,8 @@ export default function HistoryPage() {
         {loading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>載入中...</div>}
 
         {Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a)).map(([date, items]) => {
-          const dayTotal = items.reduce((a, r) => a + r.amountJPY, 0)
+          const dayJPY = items.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+          const dayTWD = items.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
           const d = new Date(date)
           const weekdays = ['日', '一', '二', '三', '四', '五', '六']
           return (
@@ -67,7 +70,7 @@ export default function HistoryPage() {
                   {date}（{weekdays[d.getDay()]}）
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  ¥{dayTotal.toLocaleString()} ≈ NT${toTWD(dayTotal, s.exchangeRate).toLocaleString()}
+                  ¥{dayJPY.toLocaleString()}{dayTWD > 0 && ` · NT$${dayTWD.toLocaleString()}`}
                 </div>
               </div>
               {items.map((r, i) => (
@@ -84,8 +87,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>¥{r.amountJPY.toLocaleString()}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-hint)' }}>NT${toTWD(r.amountJPY, s.exchangeRate).toLocaleString()}</div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
                   </div>
                   <button onClick={() => deleteItem(r)} style={{ background: 'none', border: 'none', color: 'var(--text-hint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 4px' }}>×</button>
                 </div>
