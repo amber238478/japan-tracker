@@ -26,11 +26,13 @@ export default function AddPage() {
     setSaving(true)
     try {
       const amount = Math.round(Number(form.amount))
-      await fetch('/api/notion', {
+      const res = await fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, amount, currency: form.currency })
       })
+      const d = await res.json()
+      if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
       router.push('/')
     } catch {
       alert('儲存失敗')
