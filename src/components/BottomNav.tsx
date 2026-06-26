@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
+import { resizeImageToBase64 } from '@/lib/image'
 
 export default function BottomNav() {
   const path = usePathname()
@@ -11,32 +12,26 @@ export default function BottomNav() {
 
   const handleFile = async (file: File) => {
     setBusy(true)
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type
-      try {
-        const res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64, mimeType })
-        })
-        const data = await res.json()
-        if (data.success) {
-          sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
-          router.push('/scan/confirm')
-        } else {
-          alert(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或使用上傳頁面')
-        }
-      } catch (err) {
-        console.error(err)
-        alert('網路錯誤，請稍後重試')
-      } finally {
-        setBusy(false)
+    try {
+      const { base64, mimeType } = await resizeImageToBase64(file)
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType })
+      })
+      const data = await res.json()
+      if (data.success) {
+        sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
+        router.push('/scan/confirm')
+      } else {
+        alert(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或使用上傳頁面')
       }
+    } catch (err) {
+      console.error(err)
+      alert('網路錯誤，請稍後重試')
+    } finally {
+      setBusy(false)
     }
-    reader.readAsDataURL(file)
   }
 
   return (

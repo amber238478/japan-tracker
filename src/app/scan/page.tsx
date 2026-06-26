@@ -1,6 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { resizeImageToBase64 } from '@/lib/image'
 
 export default function ScanPage() {
   const router = useRouter()
@@ -17,10 +18,8 @@ export default function ScanPage() {
       setAnalyzing(true)
       setError('')
 
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type
-
       try {
+        const { base64, mimeType } = await resizeImageToBase64(file)
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
