@@ -26,6 +26,9 @@ export async function POST(req: NextRequest) {
   try {
     const { imageBase64, mimeType } = await req.json()
     const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ success: false, error: 'GEMINI_API_KEY 未設定，請到 Vercel 專案的 Environment Variables 新增' }, { status: 500 })
+    }
 
     let lastError = ''
     for (const model of MODELS) {
@@ -42,23 +45,33 @@ export async function POST(req: NextRequest) {
                   { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } }
                 ]
               }],
-              generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+              generationConfig: { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: 'application/json' }
             })
           }
         )
 
         if (!res.ok) {
-          lastError = await res.text()
+          lastError = `[${model}] HTTP ${res.status}: ${await res.text()}`
+          console.error('Gemini API error', lastError)
           continue
         }
 
         const data = await res.json()
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-        const clean = text.replace(/```json|```/g, '').trim()
+        const finishReason = data.candidates?.[0]?.finishReason
+        if (!text) {
+          lastError = `[${model}] 空白回應（finishReason: ${finishReason}）`
+          console.error(lastError, JSON.stringify(data))
+          continue
+        }
+
+        const match = text.match(/\{[\s\S]*\}/)
+        const clean = (match ? match[0] : text).replace(/```json|```/g, '').trim()
         const parsed = JSON.parse(clean)
         return NextResponse.json({ success: true, data: parsed })
       } catch (e) {
-        lastError = String(e)
+        lastError = `[${model}] ${String(e)}`
+        console.error('analyze failed', lastError)
       }
     }
 

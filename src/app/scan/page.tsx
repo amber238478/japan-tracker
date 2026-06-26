@@ -31,7 +31,7 @@ export default function ScanPage() {
           sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
           router.push('/scan/confirm')
         } else {
-          setError('辨識失敗，請重試或手動輸入')
+          setError(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或手動輸入')
           setAnalyzing(false)
         }
       } catch {
