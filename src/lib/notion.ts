@@ -60,20 +60,20 @@ export async function addReceipt(r: Receipt): Promise<string> {
   const hasTwdField = propNames.has('金額TWD')
 
   const properties: any = {
-    '項目': { title: [{ text: { content: r.items } }] },
-    '商店名稱': { rich_text: [{ text: { content: r.storeName } }] },
-    '商店日文': { rich_text: [{ text: { content: r.storeNameJa } }] },
-    '商品日文': { rich_text: [{ text: { content: r.itemsJa } }] },
+    '項目': { title: [{ text: { content: r.items ?? '' } }] },
+    '商店名稱': { rich_text: [{ text: { content: r.storeName ?? '' } }] },
+    '商店日文': { rich_text: [{ text: { content: r.storeNameJa ?? '' } }] },
+    '商品日文': { rich_text: [{ text: { content: r.itemsJa ?? '' } }] },
     '日期': { date: { start: r.date } },
     // 沒有 金額TWD 欄位時，TWD 金額暫存於 金額JPY 以免遺失（之後新增欄位即可正確分流）
     '金額JPY': { number: (currency === 'JPY' || !hasTwdField) ? r.amount : 0 },
     '類別': { select: { name: r.category } },
     '支付方式': { select: { name: r.paymentMethod } },
-    '地區': { rich_text: [{ text: { content: r.region } }] },
-    '付款人': { rich_text: [{ text: { content: r.paidBy } }] },
+    '地區': { rich_text: [{ text: { content: r.region ?? '' } }] },
+    '付款人': { rich_text: [{ text: { content: r.paidBy ?? '' } }] },
     '分帳對象': { rich_text: [{ text: { content: r.splitWith ?? '' } }] },
     '分帳比例': { number: r.splitRatio },
-    '備註': { rich_text: [{ text: { content: r.notes } }] },
+    '備註': { rich_text: [{ text: { content: r.notes ?? '' } }] },
   }
   if (hasCurrencyField) properties['幣別'] = { select: { name: currency } }
   if (hasTwdField) properties['金額TWD'] = { number: currency === 'TWD' ? r.amount : 0 }
