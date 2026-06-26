@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const MODELS = [
   'gemini-2.0-flash-001',
   'gemini-2.0-flash',
-  'gemini-1.5-flash',
+  'gemini-2.5-flash',
 ]
 
 const PROMPT = `你是一個日本收據辨識助手。分析這張收據圖片，回傳 JSON 格式資料。
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'GEMINI_API_KEY 未設定，請到 Vercel 專案的 Environment Variables 新增' }, { status: 500 })
     }
 
-    let lastError = ''
+    const errors: string[] = []
     for (const model of MODELS) {
       try {
         const res = await fetch(
@@ -51,8 +51,9 @@ export async function POST(req: NextRequest) {
         )
 
         if (!res.ok) {
-          lastError = `[${model}] HTTP ${res.status}: ${await res.text()}`
-          console.error('Gemini API error', lastError)
+          const errText = `[${model}] HTTP ${res.status}: ${await res.text()}`
+          errors.push(errText)
+          console.error('Gemini API error', errText)
           continue
         }
 
@@ -60,8 +61,9 @@ export async function POST(req: NextRequest) {
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
         const finishReason = data.candidates?.[0]?.finishReason
         if (!text) {
-          lastError = `[${model}] 空白回應（finishReason: ${finishReason}）`
-          console.error(lastError, JSON.stringify(data))
+          const errText = `[${model}] 空白回應（finishReason: ${finishReason}）`
+          errors.push(errText)
+          console.error(errText, JSON.stringify(data))
           continue
         }
 
@@ -70,12 +72,13 @@ export async function POST(req: NextRequest) {
         const parsed = JSON.parse(clean)
         return NextResponse.json({ success: true, data: parsed })
       } catch (e) {
-        lastError = `[${model}] ${String(e)}`
-        console.error('analyze failed', lastError)
+        const errText = `[${model}] ${String(e)}`
+        errors.push(errText)
+        console.error('analyze failed', errText)
       }
     }
 
-    return NextResponse.json({ success: false, error: lastError }, { status: 500 })
+    return NextResponse.json({ success: false, error: errors.join(' | ') }, { status: 500 })
   } catch (e) {
     return NextResponse.json({ success: false, error: String(e) }, { status: 500 })
   }
