@@ -2,16 +2,49 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, saveSettings } from '@/lib/settings'
-import { AppSettings } from '@/lib/types'
+import { AppSettings, Trip } from '@/lib/types'
 import { useCallback } from 'react'
 import { exportReport } from '@/lib/report'
+
+function newTripDraft(): Trip {
+  return {
+    name: '',
+    tripStart: new Date().toISOString().split('T')[0],
+    tripDays: 7,
+    budget: 100000,
+    exchangeRate: 0.21,
+  }
+}
 
 export default function SettingsPage() {
   const router = useRouter()
   const [form, setForm] = useState<AppSettings>(getSettings())
   const [saved, setSaved] = useState(false)
+  const [showAddTrip, setShowAddTrip] = useState(false)
+  const [newTrip, setNewTrip] = useState<Trip>(newTripDraft())
 
-  const set = (key: keyof AppSettings, val: any) => setForm(f => ({ ...f, [key]: val }))
+  const activeTrip = form.trips.find(t => t.name === form.activeTrip) ?? form.trips[0]
+
+  const set = (key: 'user1' | 'user2', val: string) => setForm(f => ({ ...f, [key]: val }))
+
+  const selectTrip = (name: string) => setForm(f => ({ ...f, activeTrip: name }))
+
+  const setTripField = (key: keyof Trip, val: any) => {
+    setForm(f => ({
+      ...f,
+      trips: f.trips.map(t => t.name === f.activeTrip ? { ...t, [key]: val } : t)
+    }))
+  }
+
+  const addTrip = () => {
+    const name = newTrip.name.trim()
+    if (!name) { alert('請輸入行程名稱'); return }
+    if (form.trips.some(t => t.name === name)) { alert('已有相同名稱的行程'); return }
+    const trip = { ...newTrip, name }
+    setForm(f => ({ ...f, trips: [...f.trips, trip], activeTrip: trip.name }))
+    setNewTrip(newTripDraft())
+    setShowAddTrip(false)
+  }
 
   const save = () => {
     const ok = saveSettings(form)
@@ -38,19 +71,54 @@ export default function SettingsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div className="card">
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>旅行資訊</div>
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅行名稱</div>
-            <input value={form.tripName} onChange={e => set('tripName', e.target.value)} placeholder="九州之旅" />
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>行程</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: showAddTrip ? 12 : 0 }}>
+            {form.trips.map(t => (
+              <button key={t.name} onClick={() => selectTrip(t.name)}
+                style={{ padding: '6px 12px', borderRadius: 10, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                  borderColor: form.activeTrip === t.name ? 'var(--accent)' : 'var(--border)',
+                  background: form.activeTrip === t.name ? 'var(--accent-light)' : 'transparent',
+                  color: form.activeTrip === t.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
+                {t.name}
+              </button>
+            ))}
+            <button onClick={() => setShowAddTrip(v => !v)}
+              style={{ padding: '6px 12px', borderRadius: 10, border: '0.5px dashed var(--border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, background: 'transparent', color: 'var(--text-muted)' }}>
+              + 新增行程
+            </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>出發日期</div>
-              <input type="date" value={form.tripStart} onChange={e => set('tripStart', e.target.value)} />
+
+          {showAddTrip && (
+            <div style={{ borderTop: '0.5px solid var(--border-light)', paddingTop: 12, marginBottom: 12 }}>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>行程名稱</div>
+                <input value={newTrip.name} onChange={e => setNewTrip(t => ({ ...t, name: e.target.value }))} placeholder="例：熊本之旅" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>出發日期</div>
+                  <input type="date" value={newTrip.tripStart} onChange={e => setNewTrip(t => ({ ...t, tripStart: e.target.value }))} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅行天數</div>
+                  <input type="number" value={newTrip.tripDays} onChange={e => setNewTrip(t => ({ ...t, tripDays: Number(e.target.value) }))} />
+                </div>
+              </div>
+              <button className="btn-primary" onClick={addTrip}>新增行程</button>
             </div>
-            <div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅行天數</div>
-              <input type="number" value={form.tripDays} onChange={e => set('tripDays', Number(e.target.value))} />
+          )}
+
+          <div style={{ borderTop: '0.5px solid var(--border-light)', paddingTop: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>目前行程：{activeTrip.name}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>出發日期</div>
+                <input type="date" value={activeTrip.tripStart} onChange={e => setTripField('tripStart', e.target.value)} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅行天數</div>
+                <input type="number" value={activeTrip.tripDays} onChange={e => setTripField('tripDays', Number(e.target.value))} />
+              </div>
             </div>
           </div>
         </div>
@@ -70,14 +138,14 @@ export default function SettingsPage() {
         </div>
 
         <div className="card">
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>預算與匯率</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>預算與匯率 · {activeTrip.name}</div>
           <div style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>總預算（日幣）</div>
-            <input type="number" value={form.budget} onChange={e => set('budget', Number(e.target.value))} placeholder="100000" />
+            <input type="number" value={activeTrip.budget} onChange={e => setTripField('budget', Number(e.target.value))} placeholder="100000" />
           </div>
           <div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>匯率（¥1 = NT$?）</div>
-            <input type="number" step="0.001" value={form.exchangeRate} onChange={e => set('exchangeRate', Number(e.target.value))} placeholder="0.206" />
+            <input type="number" step="0.001" value={activeTrip.exchangeRate} onChange={e => setTripField('exchangeRate', Number(e.target.value))} placeholder="0.206" />
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 export interface Receipt {
   id?: string
   notionId?: string
+  trip: string
   storeName: string
   storeNameJa: string
   items: string
@@ -21,12 +22,17 @@ export type Currency = 'JPY' | 'TWD'
 export type Category = '餐飲' | '交通' | '購物' | '門票' | '住宿' | '藥品' | '其他'
 export type PaymentMethod = '現金' | '信用卡' | 'Suica' | 'PayPay' | '其他'
 
-export interface AppSettings {
+export interface Trip {
+  name: string
+  tripStart: string
+  tripDays: number
   budget: number
   exchangeRate: number
-  tripDays: number
-  tripStart: string
-  tripName: string
+}
+
+export interface AppSettings {
+  trips: Trip[]
+  activeTrip: string  // = Trip.name
   user1: string
   user2: string
 }

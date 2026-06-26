@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getSettings } from '@/lib/settings'
+import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { buildTripReport } from '@/lib/tripReport'
 import { Receipt, Category, Currency } from '@/lib/types'
 
@@ -34,7 +34,9 @@ function buildStats(receipts: Receipt[], currency: Currency) {
 export default function StatsPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
-  const s = getSettings()
+  const settings = getSettings()
+  const trip = getActiveTrip(settings)
+  const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
 
   useEffect(() => {
     fetch('/api/notion').then(r => r.json()).then(d => {
@@ -42,13 +44,13 @@ export default function StatsPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const jpyStats = buildStats(receipts, 'JPY')
-  const twdStats = buildStats(receipts, 'TWD')
+  const jpyStats = buildStats(tripReceipts, 'JPY')
+  const twdStats = buildStats(tripReceipts, 'TWD')
 
   const shareReport = async () => {
-    const text = buildTripReport(receipts, s)
+    const text = buildTripReport(tripReceipts, trip, settings)
     if (navigator.share) {
-      try { await navigator.share({ title: `${s.tripName} 旅行報表`, text }) } catch {}
+      try { await navigator.share({ title: `${trip.name} 旅行報表`, text }) } catch {}
       return
     }
     try {
@@ -63,8 +65,8 @@ export default function StatsPage() {
     <main>
       <div style={{ padding: '20px 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 500 }}>統計分析</div>
-        <button onClick={shareReport} disabled={receipts.length === 0}
-          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', opacity: receipts.length === 0 ? 0.5 : 1 }}>
+        <button onClick={shareReport} disabled={tripReceipts.length === 0}
+          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', opacity: tripReceipts.length === 0 ? 0.5 : 1 }}>
           📤 分享報表
         </button>
       </div>

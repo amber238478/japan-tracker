@@ -30,6 +30,7 @@ export async function getReceipts(): Promise<Receipt[]> {
       const currency = p['幣別']?.select?.name === 'TWD' ? 'TWD' : 'JPY'
       results.push({
         notionId: page.id,
+        trip: p['行程']?.select?.name ?? '',
         storeName: p['商店名稱']?.rich_text?.[0]?.plain_text ?? '',
         storeNameJa: p['商店日文']?.rich_text?.[0]?.plain_text ?? '',
         items: p['項目']?.title?.[0]?.plain_text ?? '',
@@ -58,6 +59,7 @@ export async function addReceipt(r: Receipt): Promise<string> {
   const propNames = await getPropertyNames()
   const hasCurrencyField = propNames.has('幣別')
   const hasTwdField = propNames.has('金額TWD')
+  const hasTripField = propNames.has('行程')
 
   const properties: any = {
     '項目': { title: [{ text: { content: r.items ?? '' } }] },
@@ -77,6 +79,7 @@ export async function addReceipt(r: Receipt): Promise<string> {
   }
   if (hasCurrencyField) properties['幣別'] = { select: { name: currency } }
   if (hasTwdField) properties['金額TWD'] = { number: currency === 'TWD' ? r.amount : 0 }
+  if (hasTripField && r.trip) properties['行程'] = { select: { name: r.trip } }
 
   const page = await notion.pages.create({ parent: { database_id: DB_ID }, properties })
   return page.id
@@ -86,8 +89,10 @@ export async function updateReceipt(notionId: string, r: Partial<Receipt>) {
   const propNames = await getPropertyNames()
   const hasCurrencyField = propNames.has('幣別')
   const hasTwdField = propNames.has('金額TWD')
+  const hasTripField = propNames.has('行程')
 
   const props: any = {}
+  if (r.trip !== undefined && hasTripField) props['行程'] = { select: { name: r.trip } }
   if (r.items !== undefined) props['項目'] = { title: [{ text: { content: r.items } }] }
   if (r.storeName !== undefined) props['商店名稱'] = { rich_text: [{ text: { content: r.storeName } }] }
   if (r.amount !== undefined && r.currency !== undefined) {

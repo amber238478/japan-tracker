@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSettings } from '@/lib/settings'
+import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
@@ -10,6 +10,7 @@ const PAYMENTS: PaymentMethod[] = ['現金', '信用卡', 'Suica', 'PayPay', '�
 export default function ConfirmPage() {
   const router = useRouter()
   const s = getSettings()
+  const trip = getActiveTrip(s)
   const [form, setForm] = useState<Partial<Receipt>>({})
   const [saving, setSaving] = useState(false)
 
@@ -25,6 +26,7 @@ export default function ConfirmPage() {
       splitWith: null,
       splitRatio: 0.5,
       date: data.date || new Date().toISOString().split('T')[0],
+      trip: trip.name,
     })
   }, [])
 

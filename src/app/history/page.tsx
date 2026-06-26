@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
-import { getSettings } from '@/lib/settings'
+import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { Receipt } from '@/lib/types'
 
 const TAG_MAP: Record<string, string> = {
@@ -14,7 +14,8 @@ export default function HistoryPage() {
   const router = useRouter()
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
-  const s = getSettings()
+  const settings = getSettings()
+  const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
 
   useEffect(() => {
     fetch('/api/notion').then(r => r.json()).then(d => {
@@ -22,12 +23,12 @@ export default function HistoryPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const totalJPY = receipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-  const totalTWD = receipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+  const totalJPY = tripReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+  const totalTWD = tripReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
 
   // Group by date
   const grouped: Record<string, Receipt[]> = {}
-  receipts.forEach(r => {
+  tripReceipts.forEach(r => {
     if (!grouped[r.date]) grouped[r.date] = []
     grouped[r.date].push(r)
   })
@@ -53,7 +54,7 @@ export default function HistoryPage() {
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅行總支出</div>
           <div style={{ fontSize: 26, fontWeight: 500 }}>¥{totalJPY.toLocaleString()}</div>
           {totalTWD > 0 && <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)' }}>NT${totalTWD.toLocaleString()}</div>}
-          <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>{receipts.length} 筆</div>
+          <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>{tripReceipts.length} 筆</div>
         </div>
       </div>
 
@@ -78,8 +79,8 @@ export default function HistoryPage() {
               {items.map((r, i) => (
                 <div key={i} className="card" onClick={() => router.push(`/edit/${r.notionId}`)}
                   style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                  <div className={`avatar ${r.paidBy === s.user1 ? 'avatar-1' : 'avatar-2'}`}>
-                    {(r.paidBy || s.user1).charAt(0)}
+                  <div className={`avatar ${r.paidBy === settings.user1 ? 'avatar-1' : 'avatar-2'}`}>
+                    {(r.paidBy || settings.user1).charAt(0)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.items}</div>

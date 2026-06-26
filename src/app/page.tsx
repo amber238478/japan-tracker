@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, getDayNumber } from '@/lib/settings'
+import { getSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 
@@ -14,7 +14,6 @@ const TAG_MAP: Record<string, string> = {
 export default function Home() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
-  const settings = typeof window !== 'undefined' ? getSettings() : null
 
   useEffect(() => {
     fetch('/api/notion')
@@ -23,17 +22,38 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [])
 
-  const s = getSettings()
+  const settings = getSettings()
+  const trip = getActiveTrip(settings)
+  const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
   const today = new Date().toISOString().split('T')[0]
   // 檢查 today 是否在 trip 範圍內，若不在就顯示真實的 today 並把 Day 顯示成「—」
-  const tripStartObj = new Date(s.tripStart)
-  const tripEndObj = new Date(s.tripStart)
-  tripEndObj.setDate(tripEndObj.getDate() + s.tripDays - 1)
+  const tripStartObj = new Date(trip.tripStart)
+  const tripEndObj = new Date(trip.tripStart)
+  tripEndObj.setDate(tripEndObj.getDate() + trip.tripDays - 1)
   const todayObj = new Date(today)
   const inRange = todayObj >= tripStartObj && todayObj <= tripEndObj
-  const initialOffset = inRange ? Math.max(0, getDayNumber(today, s.tripStart) - 1) : 0
+  const initialOffset = inRange ? Math.max(0, getDayNumber(today, trip.tripStart) - 1) : 0
   const [dayOffset, setDayOffset] = useState<number>(initialOffset)
   const [showRealToday, setShowRealToday] = useState<boolean>(!inRange)
+  useEffect(() => {
+    setDayOffset(initialOffset)
+    setShowRealToday(!inRange)
+  }, [trip.name])
+  const [showTripMenu, setShowTripMenu] = useState(false)
+  const tripMenuRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!tripMenuRef.current) return
+      if (!(e.target instanceof Node)) return
+      if (!tripMenuRef.current.contains(e.target)) setShowTripMenu(false)
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [])
+  const selectTrip = (name: string) => {
+    saveSettings({ ...settings, activeTrip: name })
+    setShowTripMenu(false)
+  }
   const touchStartX = useRef<number | null>(null)
     const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
     const handleTouchEnd = (e: React.TouchEvent) => {
@@ -42,20 +62,20 @@ export default function Home() {
       const dx = endX - touchStartX.current
       const THRESH = 50
       if (dx > THRESH) setDayOffset(d => Math.max(0, d - 1))
-      else if (dx < -THRESH) setDayOffset(d => Math.min(d + 1, s.tripDays - 1))
+      else if (dx < -THRESH) setDayOffset(d => Math.min(d + 1, trip.tripDays - 1))
       touchStartX.current = null
     }
-    const displayDateObj = new Date(s.tripStart)
+    const displayDateObj = new Date(trip.tripStart)
     displayDateObj.setDate(displayDateObj.getDate() + dayOffset)
     const tripDisplayDate = displayDateObj.toISOString().split('T')[0]
     const displayDate = showRealToday ? today : tripDisplayDate
     const dayNum = showRealToday ? 0 : dayOffset + 1
-    const tripDayReceipts = receipts.filter(r => r.date === displayDate)
+    const tripDayReceipts = tripReceipts.filter(r => r.date === displayDate)
     const tripDayJPY = tripDayReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
     const tripDayTWD = tripDayReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
     // 建立旅程日期選單資料
-    const tripDaysArray = Array.from({ length: s.tripDays }, (_, i) => {
-      const d = new Date(s.tripStart)
+    const tripDaysArray = Array.from({ length: trip.tripDays }, (_, i) => {
+      const d = new Date(trip.tripStart)
       d.setDate(d.getDate() + i)
       return { day: i + 1, date: d.toISOString().split('T')[0] }
     })
@@ -70,20 +90,20 @@ export default function Home() {
       document.addEventListener('click', onDocClick)
       return () => document.removeEventListener('click', onDocClick)
     }, [])
-  const tripJPY = receipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-  const tripTWD = receipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
-  const split = calcSplit(receipts, s.user1, s.user2)
+  const tripJPY = tripReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
+  const tripTWD = tripReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+  const split = calcSplit(tripReceipts, settings.user1, settings.user2)
 
   // 鍵盤左右鍵與 Home 支援
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') setDayOffset(d => Math.max(0, d - 1))
-      if (e.key === 'ArrowRight') setDayOffset(d => Math.min(d + 1, s.tripDays - 1))
+      if (e.key === 'ArrowRight') setDayOffset(d => Math.min(d + 1, trip.tripDays - 1))
       if (e.key === 'Home') setDayOffset(initialOffset)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [initialOffset, s.tripDays])
+  }, [initialOffset, trip.tripDays])
 
   return (
     <main>
@@ -94,7 +114,24 @@ export default function Home() {
         <Link href="/settings" style={{ position: 'absolute', top: 20, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 16 }}>⚙</Link>
         {/* Centered trip label */}
         <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>
-          DAY {dayNum > 0 ? dayNum : '—'} · {s.tripName}
+          DAY {dayNum > 0 ? dayNum : '—'} ·{' '}
+          {settings.trips.length > 1 ? (
+            <span ref={tripMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+              <span onClick={() => setShowTripMenu(v => !v)} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>
+                {trip.name}
+              </span>
+              {showTripMenu && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50, textAlign: 'left' }}>
+                  {settings.trips.map(t => (
+                    <div key={t.name} onClick={() => selectTrip(t.name)}
+                      style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap', color: t.name === trip.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
+                      {t.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </span>
+          ) : trip.name}
         </div>
         {/* Centered buttons */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
@@ -155,8 +192,8 @@ export default function Home() {
         )}
         {tripDayReceipts.map((r, i) => (
           <div key={i} className="card" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div className={`avatar ${r.paidBy === s.user1 ? 'avatar-1' : 'avatar-2'}`}>
-              {(r.paidBy || s.user1).charAt(0)}
+            <div className={`avatar ${r.paidBy === settings.user1 ? 'avatar-1' : 'avatar-2'}`}>
+              {(r.paidBy || settings.user1).charAt(0)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.items}</div>

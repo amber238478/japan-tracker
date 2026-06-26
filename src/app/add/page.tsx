@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSettings } from '@/lib/settings'
+import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod } from '@/lib/types'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
@@ -10,13 +10,14 @@ const PAYMENTS: PaymentMethod[] = ['現金', '信用卡', 'Suica', 'PayPay', '�
 export default function AddPage() {
   const router = useRouter()
   const s = getSettings()
+  const trip = getActiveTrip(s)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     items: '', storeName: '', amount: '', currency: 'JPY' as 'JPY' | 'TWD',
     category: '餐飲' as Category, paymentMethod: '現金' as PaymentMethod,
     date: new Date().toISOString().split('T')[0],
     paidBy: s.user1, splitWith: null as string | null, splitRatio: 0.5, notes: '',
-    storeNameJa: '', itemsJa: '', region: '',
+    storeNameJa: '', itemsJa: '', region: '', trip: trip.name,
   })
 
   const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }))

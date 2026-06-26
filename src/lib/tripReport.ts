@@ -1,11 +1,11 @@
-import { Receipt, AppSettings } from './types'
+import { Receipt, Trip, AppSettings } from './types'
 import { calcSplit } from './split'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
 
-export function buildTripReport(receipts: Receipt[], settings: AppSettings): string {
-  const tripEnd = new Date(settings.tripStart)
-  tripEnd.setDate(tripEnd.getDate() + settings.tripDays - 1)
+export function buildTripReport(receipts: Receipt[], trip: Trip, settings: AppSettings): string {
+  const tripEnd = new Date(trip.tripStart)
+  tripEnd.setDate(tripEnd.getDate() + trip.tripDays - 1)
 
   const jpy = receipts.filter(r => r.currency !== 'TWD')
   const twd = receipts.filter(r => r.currency === 'TWD')
@@ -13,8 +13,8 @@ export function buildTripReport(receipts: Receipt[], settings: AppSettings): str
   const twdTotal = twd.reduce((a, r) => a + r.amount, 0)
 
   const lines: string[] = []
-  lines.push(`🗒 ${settings.tripName} 旅行報表`)
-  lines.push(`${settings.tripStart} ~ ${tripEnd.toISOString().split('T')[0]}（${settings.tripDays}天）`)
+  lines.push(`🗒 ${trip.name} 旅行報表`)
+  lines.push(`${trip.tripStart} ~ ${tripEnd.toISOString().split('T')[0]}（${trip.tripDays}天）`)
   lines.push('')
 
   lines.push('💰 總支出')

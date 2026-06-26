@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
-import { getSettings } from '@/lib/settings'
+import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit } from '@/lib/split'
 import { CurrencySplitSummary, Receipt } from '@/lib/types'
 
@@ -9,6 +9,7 @@ export default function SplitPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
   const s = getSettings()
+  const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, s))
 
   useEffect(() => {
     fetch('/api/notion').then(r => r.json()).then(d => {
@@ -16,8 +17,8 @@ export default function SplitPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const split = calcSplit(receipts, s.user1, s.user2)
-  const splitReceipts = receipts.filter(r => r.splitWith)
+  const split = calcSplit(tripReceipts, s.user1, s.user2)
+  const splitReceipts = tripReceipts.filter(r => r.splitWith)
   const currencies = (['JPY', 'TWD'] as const).filter(c => splitReceipts.some(r => r.currency === c))
 
   return (
