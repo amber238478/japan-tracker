@@ -27,7 +27,7 @@ export default function BottomNav() {
           sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
           router.push('/scan/confirm')
         } else {
-          alert('辨識失敗，請重試或使用上傳頁面')
+          alert(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或使用上傳頁面')
         }
       } catch (err) {
         console.error(err)
