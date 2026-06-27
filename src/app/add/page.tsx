@@ -123,17 +123,34 @@ export default function AddPage() {
               AA 分帳
             </button>
           </div>
-          {form.splitWith !== null && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                {form.paidBy} 的比例：{Math.round(form.splitRatio * 100)}%
+          {form.splitWith !== null && (() => {
+            const total = Number(form.amount) || 0
+            const paidByAmt = Math.round(total * form.splitRatio)
+            const splitWithAmt = total - paidByAmt
+            const setPaidByAmt = (v: number) => set('splitRatio', total > 0 ? Math.min(1, Math.max(0, v / total)) : 0.5)
+            const setSplitWithAmt = (v: number) => set('splitRatio', total > 0 ? Math.min(1, Math.max(0, 1 - v / total)) : 0.5)
+            return (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                  {form.paidBy} 的比例：{Math.round(form.splitRatio * 100)}%
+                </div>
+                <input type="range" min="0" max="100" step="5"
+                  value={Math.round(form.splitRatio * 100)}
+                  onChange={e => set('splitRatio', Number(e.target.value) / 100)}
+                  style={{ width: '100%', marginBottom: 10 }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{form.paidBy} 金額</div>
+                    <input type="number" value={paidByAmt} onChange={e => setPaidByAmt(Number(e.target.value))} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{form.splitWith} 金額</div>
+                    <input type="number" value={splitWithAmt} onChange={e => setSplitWithAmt(Number(e.target.value))} />
+                  </div>
+                </div>
               </div>
-              <input type="range" min="0" max="100" step="5"
-                value={Math.round(form.splitRatio * 100)}
-                onChange={e => set('splitRatio', Number(e.target.value) / 100)}
-                style={{ width: '100%' }} />
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         <button className="btn-primary" onClick={save} disabled={saving} style={{ opacity: saving ? 0.5 : 1 }}>
