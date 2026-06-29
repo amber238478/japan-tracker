@@ -21,14 +21,52 @@ export default function SplitPage() {
   const splitReceipts = tripReceipts.filter(r => r.splitWith)
   const currencies = (['JPY', 'TWD'] as const).filter(c => splitReceipts.some(r => r.currency === c))
 
+  // 總支出（依付款人）：不論是否分帳，統計每人實際花費的總金額
+  const payerCurrencies = (['JPY', 'TWD'] as const).filter(c => tripReceipts.some(r => r.currency === c))
+  const payerTotals = payerCurrencies.map(c => {
+    const recs = tripReceipts.filter(r => r.currency === c)
+    const user1Total = recs.filter(r => r.paidBy === s.user1).reduce((a, r) => a + r.amount, 0)
+    const user2Total = recs.filter(r => r.paidBy === s.user2).reduce((a, r) => a + r.amount, 0)
+    return { c, user1Total, user2Total }
+  })
+
   return (
     <main>
       <div style={{ padding: '20px 16px 12px' }}>
         <div style={{ fontSize: 20, fontWeight: 500 }}>分帳結算</div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>只計算有分帳的消費</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>結算金額只計算有標記分帳的消費，各自花費總計則包含所有記錄</div>
       </div>
 
       <div className="page">
+        {/* 各自花費總計（不論是否分帳） */}
+        {payerCurrencies.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div className="section-label">各自花費總計</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {[
+                { name: s.user1, cls: 'avatar-1', key: 'user1Total' as const },
+                { name: s.user2, cls: 'avatar-2', key: 'user2Total' as const },
+              ].map(u => (
+                <div key={u.name} className="card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <div className={`avatar ${u.cls}`}>{u.name.charAt(0)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{u.name}</div>
+                  </div>
+                  {payerTotals.map(({ c, ...t }) => {
+                    const symbol = c === 'JPY' ? '¥' : 'NT$'
+                    return (
+                      <div key={c} style={{ marginBottom: 6 }}>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>{c}</div>
+                        <div style={{ fontSize: 16, fontWeight: 500 }}>{symbol}{t[u.key].toLocaleString()}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Result */}
         {currencies.length === 0 && !loading && (
           <div style={{ background: 'var(--green-bg)', border: '0.5px solid #C0DD97', borderLeft: '3px solid var(--green)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
