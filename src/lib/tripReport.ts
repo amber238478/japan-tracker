@@ -42,14 +42,19 @@ export function buildTripReport(receipts: Receipt[], trip: Trip, settings: AppSe
     lines.push(...catLine(twd, 'NT$', twdTotal))
   }
 
-  // 各自花費總計：不論是否分帳，統計每人實際花費的總金額
-  const user1JpyTotal = jpy.filter(r => r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
-  const user2JpyTotal = jpy.filter(r => r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
-  const user1TwdTotal = twd.filter(r => r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
-  const user2TwdTotal = twd.filter(r => r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+  // 各自真實花費：個人支出（沒有分帳，全額算自己的）+ 分帳後該負責的份額
+  const split = calcSplit(receipts, settings.user1, settings.user2)
+  const soloJpyUser1 = jpy.filter(r => !r.splitWith && r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
+  const soloJpyUser2 = jpy.filter(r => !r.splitWith && r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+  const soloTwdUser1 = twd.filter(r => !r.splitWith && r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
+  const soloTwdUser2 = twd.filter(r => !r.splitWith && r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+  const user1JpyTotal = soloJpyUser1 + split.JPY.user1Should
+  const user2JpyTotal = soloJpyUser2 + split.JPY.user2Should
+  const user1TwdTotal = soloTwdUser1 + split.TWD.user1Should
+  const user2TwdTotal = soloTwdUser2 + split.TWD.user2Should
   if (jpyTotal > 0 || twdTotal > 0) {
     lines.push('')
-    lines.push('👥 各自花費總計')
+    lines.push('👥 各自真實花費（個人支出＋分帳後）')
     if (jpyTotal > 0) {
       lines.push(`${settings.user1} ¥${user1JpyTotal.toLocaleString()} · ${settings.user2} ¥${user2JpyTotal.toLocaleString()}`)
     }
@@ -58,7 +63,6 @@ export function buildTripReport(receipts: Receipt[], trip: Trip, settings: AppSe
     }
   }
 
-  const split = calcSplit(receipts, settings.user1, settings.user2)
   const showJpySplit = Math.abs(split.JPY.balance) >= 100
   const showTwdSplit = Math.abs(split.TWD.balance) >= 30
   if (showJpySplit || showTwdSplit) {

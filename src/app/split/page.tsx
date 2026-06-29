@@ -21,12 +21,16 @@ export default function SplitPage() {
   const splitReceipts = tripReceipts.filter(r => r.splitWith)
   const currencies = (['JPY', 'TWD'] as const).filter(c => splitReceipts.some(r => r.currency === c))
 
-  // 總支出（依付款人）：不論是否分帳，統計每人實際花費的總金額
+  // 各自真實花費：個人支出（沒有分帳，全額算自己的）+ 分帳後該負責的份額
   const payerCurrencies = (['JPY', 'TWD'] as const).filter(c => tripReceipts.some(r => r.currency === c))
   const payerTotals = payerCurrencies.map(c => {
     const recs = tripReceipts.filter(r => r.currency === c)
-    const user1Total = recs.filter(r => r.paidBy === s.user1).reduce((a, r) => a + r.amount, 0)
-    const user2Total = recs.filter(r => r.paidBy === s.user2).reduce((a, r) => a + r.amount, 0)
+    const soloRecs = recs.filter(r => !r.splitWith)
+    const soloUser1 = soloRecs.filter(r => r.paidBy === s.user1).reduce((a, r) => a + r.amount, 0)
+    const soloUser2 = soloRecs.filter(r => r.paidBy === s.user2).reduce((a, r) => a + r.amount, 0)
+    const cs = split[c]
+    const user1Total = soloUser1 + cs.user1Should
+    const user2Total = soloUser2 + cs.user2Should
     return { c, user1Total, user2Total }
   })
 
@@ -34,14 +38,14 @@ export default function SplitPage() {
     <main>
       <div style={{ padding: '20px 16px 12px' }}>
         <div style={{ fontSize: 20, fontWeight: 500 }}>分帳結算</div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>結算金額只計算有標記分帳的消費，各自花費總計則包含所有記錄</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>結算金額只計算有標記分帳的消費，各自真實花費則是個人支出＋分帳後的份額</div>
       </div>
 
       <div className="page">
-        {/* 各自花費總計（不論是否分帳） */}
+        {/* 各自真實花費：個人支出 + 分帳後份額 */}
         {payerCurrencies.length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            <div className="section-label">各自花費總計</div>
+            <div className="section-label">各自真實花費（個人支出＋分帳後）</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
                 { name: s.user1, cls: 'avatar-1', key: 'user1Total' as const },
