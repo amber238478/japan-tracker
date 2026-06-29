@@ -11,15 +11,20 @@ const CAT_COLORS: Record<string, string> = {
   '門票': '#7A5AA8', '住宿': '#2A7A9A', '藥品': '#C04040', '其他': '#A09A90'
 }
 
-function buildStats(receipts: Receipt[], currency: Currency) {
+function buildStats(receipts: Receipt[], currency: Currency, user1: string, user2: string) {
   const filtered = receipts.filter(r => r.currency === currency)
   const total = filtered.reduce((a, r) => a + r.amount, 0)
 
-  const byCat = CATEGORIES.map(c => ({
-    name: c,
-    amt: filtered.filter(r => r.category === c).reduce((a, r) => a + r.amount, 0),
-    color: CAT_COLORS[c]
-  })).filter(c => c.amt > 0).sort((a, b) => b.amt - a.amt)
+  const byCat = CATEGORIES.map(c => {
+    const recs = filtered.filter(r => r.category === c)
+    return {
+      name: c,
+      amt: recs.reduce((a, r) => a + r.amount, 0),
+      user1Amt: recs.filter(r => r.paidBy === user1).reduce((a, r) => a + r.amount, 0),
+      user2Amt: recs.filter(r => r.paidBy === user2).reduce((a, r) => a + r.amount, 0),
+      color: CAT_COLORS[c]
+    }
+  }).filter(c => c.amt > 0).sort((a, b) => b.amt - a.amt)
 
   const byPayment = ['現金', '信用卡', 'Suica', 'PayPay', '其他'].map(p => ({
     name: p,
@@ -44,8 +49,8 @@ export default function StatsPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const jpyStats = buildStats(tripReceipts, 'JPY')
-  const twdStats = buildStats(tripReceipts, 'TWD')
+  const jpyStats = buildStats(tripReceipts, 'JPY', settings.user1, settings.user2)
+  const twdStats = buildStats(tripReceipts, 'TWD', settings.user1, settings.user2)
 
   const shareReport = async () => {
     const text = buildTripReport(tripReceipts, trip, settings)
@@ -93,6 +98,17 @@ export default function StatsPage() {
                     <div className="progress-track">
                       <div style={{ height: '100%', borderRadius: 2, background: c.color, width: `${stats.total > 0 ? (c.amt / stats.total) * 100 : 0}%`, transition: 'width 0.4s' }} />
                     </div>
+                    {(c.user1Amt > 0 || c.user2Amt > 0) && (
+                      <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                        {c.user1Amt > 0 && (
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{settings.user1} {symbol}{c.user1Amt.toLocaleString()}</span>
+                        )}
+                        {c.user1Amt > 0 && c.user2Amt > 0 && <span style={{ fontSize: 10, color: 'var(--border)' }}>·</span>}
+                        {c.user2Amt > 0 && (
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{settings.user2} {symbol}{c.user2Amt.toLocaleString()}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -22,19 +22,24 @@ export function buildTripReport(receipts: Receipt[], trip: Trip, settings: AppSe
   if (twdTotal > 0) lines.push(`NT$${twdTotal.toLocaleString()}`)
   lines.push('')
 
+  const catLine = (recs: Receipt[], symbol: string, currTotal: number) => CATEGORIES.map(c => {
+    const catRecs = recs.filter(r => r.category === c)
+    const amt = catRecs.reduce((a, r) => a + r.amount, 0)
+    if (amt === 0) return null
+    const u1 = catRecs.filter(r => r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
+    const u2 = catRecs.filter(r => r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+    let line = `${c} ${symbol}${amt.toLocaleString()}（${Math.round(amt / currTotal * 100)}%）`
+    if (u1 > 0 && u2 > 0) line += ` ｜ ${settings.user1} ${symbol}${u1.toLocaleString()} · ${settings.user2} ${symbol}${u2.toLocaleString()}`
+    return line
+  }).filter((l): l is string => l !== null)
+
   lines.push('📊 分類支出（JPY）')
-  CATEGORIES.forEach(c => {
-    const amt = jpy.filter(r => r.category === c).reduce((a, r) => a + r.amount, 0)
-    if (amt > 0) lines.push(`${c} ¥${amt.toLocaleString()}（${Math.round(amt / jpyTotal * 100)}%）`)
-  })
+  lines.push(...catLine(jpy, '¥', jpyTotal))
 
   if (twdTotal > 0) {
     lines.push('')
     lines.push('📊 分類支出（TWD）')
-    CATEGORIES.forEach(c => {
-      const amt = twd.filter(r => r.category === c).reduce((a, r) => a + r.amount, 0)
-      if (amt > 0) lines.push(`${c} NT$${amt.toLocaleString()}（${Math.round(amt / twdTotal * 100)}%）`)
-    })
+    lines.push(...catLine(twd, 'NT$', twdTotal))
   }
 
   // 各自花費總計：不論是否分帳，統計每人實際花費的總金額
