@@ -55,10 +55,11 @@ export function getActiveTrip(settings: AppSettings): Trip {
   return settings.trips.find(t => t.name === settings.activeTrip) ?? settings.trips[0]
 }
 
-// 舊資料在新增「行程」欄位前就存在，沒有 trip 標籤；視為屬於第一個（最早建立的）旅行
+// 舊資料在新增「行程」欄位前就存在，沒有 trip 標籤；視為屬於第一個未封存的旅行
 export function receiptBelongsToTrip(receiptTrip: string, settings: AppSettings): boolean {
   if (receiptTrip) return receiptTrip === settings.activeTrip
-  return settings.trips[0]?.name === settings.activeTrip
+  const fallback = settings.trips.find(t => !t.archived) ?? settings.trips[0]
+  return fallback?.name === settings.activeTrip
 }
 
 export function toTWD(jpy: number, rate?: number): number {

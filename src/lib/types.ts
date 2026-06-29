@@ -28,6 +28,7 @@ export interface Trip {
   tripDays: number
   budget: number
   exchangeRate: number
+  archived?: boolean
 }
 
 export interface AppSettings {

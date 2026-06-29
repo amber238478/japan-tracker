@@ -24,6 +24,7 @@ export default function Home() {
 
   const settings = getSettings()
   const trip = getActiveTrip(settings)
+  const visibleTrips = settings.trips.filter(t => !t.archived)
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
   const today = new Date().toISOString().split('T')[0]
   // 檢查 today 是否在 trip 範圍內，若不在就顯示真實的 today 並把 Day 顯示成「—」
@@ -115,14 +116,14 @@ export default function Home() {
         {/* Centered trip label */}
         <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>
           DAY {dayNum > 0 ? dayNum : '—'} ·{' '}
-          {settings.trips.length > 1 ? (
+          {visibleTrips.length > 1 ? (
             <span ref={tripMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
               <span onClick={() => setShowTripMenu(v => !v)} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>
                 {trip.name}
               </span>
               {showTripMenu && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50, textAlign: 'left' }}>
-                  {settings.trips.map(t => (
+                  {visibleTrips.map(t => (
                     <div key={t.name} onClick={() => selectTrip(t.name)}
                       style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap', color: t.name === trip.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
                       {t.name}

@@ -23,7 +23,11 @@ export default function SettingsPage() {
   const [showAddTrip, setShowAddTrip] = useState(false)
   const [newTrip, setNewTrip] = useState<Trip>(newTripDraft())
 
+  const [showArchived, setShowArchived] = useState(false)
+
   const activeTrip = form.trips.find(t => t.name === form.activeTrip) ?? form.trips[0]
+  const visibleTrips = form.trips.filter(t => !t.archived)
+  const archivedTrips = form.trips.filter(t => t.archived)
 
   const set = (key: 'user1' | 'user2', val: string) => setForm(f => ({ ...f, [key]: val }))
 
@@ -44,6 +48,32 @@ export default function SettingsPage() {
     setForm(f => ({ ...f, trips: [...f.trips, trip], activeTrip: trip.name }))
     setNewTrip(newTripDraft())
     setShowAddTrip(false)
+  }
+
+  const archiveTrip = (name: string) => {
+    setForm(f => {
+      const trips = f.trips.map(t => t.name === name ? { ...t, archived: true } : t)
+      const activeTrip = f.activeTrip === name
+        ? (trips.find(t => !t.archived)?.name ?? f.activeTrip)
+        : f.activeTrip
+      return { ...f, trips, activeTrip }
+    })
+  }
+
+  const unarchiveTrip = (name: string) => {
+    setForm(f => ({ ...f, trips: f.trips.map(t => t.name === name ? { ...t, archived: false } : t) }))
+  }
+
+  const deleteTrip = (name: string) => {
+    if (form.trips.length <= 1) { alert('至少要保留一個行程'); return }
+    if (!confirm(`確定刪除「${name}」？已記錄的收據不會被刪除，但之後在 App 裡會看不到（除非再新增一個同名行程）。`)) return
+    setForm(f => {
+      const trips = f.trips.filter(t => t.name !== name)
+      const activeTrip = f.activeTrip === name
+        ? (trips.find(t => !t.archived)?.name ?? trips[0]?.name ?? '')
+        : f.activeTrip
+      return { ...f, trips, activeTrip }
+    })
   }
 
   const save = () => {
@@ -73,7 +103,7 @@ export default function SettingsPage() {
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>行程</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: showAddTrip ? 12 : 0 }}>
-            {form.trips.map(t => (
+            {visibleTrips.map(t => (
               <button key={t.name} onClick={() => selectTrip(t.name)}
                 style={{ padding: '6px 12px', borderRadius: 10, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                   borderColor: form.activeTrip === t.name ? 'var(--accent)' : 'var(--border)',
@@ -87,6 +117,28 @@ export default function SettingsPage() {
               + 新增行程
             </button>
           </div>
+
+          {archivedTrips.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => setShowArchived(v => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: 'var(--text-hint)', padding: 0 }}>
+                {showArchived ? '隱藏' : '顯示'}已封存行程（{archivedTrips.length}）
+              </button>
+              {showArchived && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {archivedTrips.map(t => (
+                    <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 4px 12px', borderRadius: 10, border: '0.5px solid var(--border)', fontSize: 13, color: 'var(--text-hint)' }}>
+                      <span>{t.name}</span>
+                      <button onClick={() => unarchiveTrip(t.name)}
+                        style={{ background: 'var(--bg-surface)', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: 'var(--accent)', padding: '4px 8px' }}>
+                        取消封存
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {showAddTrip && (
             <div style={{ borderTop: '0.5px solid var(--border-light)', paddingTop: 12, marginBottom: 12 }}>
@@ -109,7 +161,23 @@ export default function SettingsPage() {
           )}
 
           <div style={{ borderTop: '0.5px solid var(--border-light)', paddingTop: 12 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>目前行程：{activeTrip.name}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>目前行程：{activeTrip.name}</div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {visibleTrips.length > 1 && (
+                  <button onClick={() => archiveTrip(activeTrip.name)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: 'var(--text-hint)', padding: 0 }}>
+                    封存
+                  </button>
+                )}
+                {form.trips.length > 1 && (
+                  <button onClick={() => deleteTrip(activeTrip.name)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: '#C04040', padding: 0 }}>
+                    刪除
+                  </button>
+                )}
+              </div>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>出發日期</div>
