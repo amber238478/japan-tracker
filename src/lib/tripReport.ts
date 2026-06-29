@@ -37,6 +37,22 @@ export function buildTripReport(receipts: Receipt[], trip: Trip, settings: AppSe
     })
   }
 
+  // 各自花費總計：不論是否分帳，統計每人實際花費的總金額
+  const user1JpyTotal = jpy.filter(r => r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
+  const user2JpyTotal = jpy.filter(r => r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+  const user1TwdTotal = twd.filter(r => r.paidBy === settings.user1).reduce((a, r) => a + r.amount, 0)
+  const user2TwdTotal = twd.filter(r => r.paidBy === settings.user2).reduce((a, r) => a + r.amount, 0)
+  if (jpyTotal > 0 || twdTotal > 0) {
+    lines.push('')
+    lines.push('👥 各自花費總計')
+    if (jpyTotal > 0) {
+      lines.push(`${settings.user1} ¥${user1JpyTotal.toLocaleString()} · ${settings.user2} ¥${user2JpyTotal.toLocaleString()}`)
+    }
+    if (twdTotal > 0) {
+      lines.push(`${settings.user1} NT$${user1TwdTotal.toLocaleString()} · ${settings.user2} NT$${user2TwdTotal.toLocaleString()}`)
+    }
+  }
+
   const split = calcSplit(receipts, settings.user1, settings.user2)
   const showJpySplit = Math.abs(split.JPY.balance) >= 100
   const showTwdSplit = Math.abs(split.TWD.balance) >= 30
