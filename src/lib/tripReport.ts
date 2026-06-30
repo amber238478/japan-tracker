@@ -1,5 +1,5 @@
 import { Receipt, Trip, AppSettings } from './types'
-import { calcSplit } from './split'
+import { calcSplit, attribute } from './split'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
 const DIVIDER = '－－－－－－－－－－'
@@ -8,25 +8,6 @@ const DIVIDER = '－－－－－－－－－－'
 function padAmounts(strs: string[]): string[] {
   const width = Math.max(...strs.map(s => s.length), 0)
   return strs.map(s => s.padStart(width))
-}
-
-// 計算一筆收據各自歸屬的金額：沒有分帳全額算 paidBy，有分帳則依比例拆給兩人
-function attribute(r: Receipt, user1: string, user2: string): [number, number] {
-  if (!r.splitWith) {
-    if (r.paidBy === user1) return [r.amount, 0]
-    if (r.paidBy === user2) return [0, r.amount]
-    return [0, 0]
-  }
-  const ratio = r.splitRatio ?? 0.5
-  if (r.paidBy === user1) {
-    const u1 = Math.round(r.amount * ratio)
-    return [u1, r.amount - u1]
-  }
-  if (r.paidBy === user2) {
-    const u2 = Math.round(r.amount * ratio)
-    return [r.amount - u2, u2]
-  }
-  return [0, 0]
 }
 
 function categoryRows(recs: Receipt[], idx: 0 | 1, user1: string, user2: string) {

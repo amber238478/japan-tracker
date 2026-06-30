@@ -46,3 +46,27 @@ export function calcSplit(receipts: Receipt[], user1: string, user2: string): Sp
     TWD: calcForCurrency(receipts, 'TWD', user1, user2),
   }
 }
+
+// 一筆收據各自歸屬的金額：沒有分帳全額算 paidBy，有分帳則依比例拆給兩人
+export function attribute(r: Receipt, user1: string, user2: string): [number, number] {
+  if (!r.splitWith) {
+    if (r.paidBy === user1) return [r.amount, 0]
+    if (r.paidBy === user2) return [0, r.amount]
+    return [0, 0]
+  }
+  const ratio = r.splitRatio ?? 0.5
+  if (r.paidBy === user1) {
+    const u1 = Math.round(r.amount * ratio)
+    return [u1, r.amount - u1]
+  }
+  if (r.paidBy === user2) {
+    const u2 = Math.round(r.amount * ratio)
+    return [r.amount - u2, u2]
+  }
+  return [0, 0]
+}
+
+// 某人在指定幣別的真實花費總額：個人支出（沒有分帳，全額算自己的）＋ 分帳後該負責的份額
+export function personalTotal(receipts: Receipt[], currency: Currency, user: string, otherUser: string): number {
+  return receipts.filter(r => r.currency === currency).reduce((a, r) => a + attribute(r, user, otherUser)[0], 0)
+}

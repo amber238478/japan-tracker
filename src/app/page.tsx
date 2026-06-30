@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
-import { calcSplit } from '@/lib/split'
+import { calcSplit, personalTotal } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 
 const TAG_MAP: Record<string, string> = {
@@ -91,8 +91,8 @@ export default function Home() {
       document.addEventListener('click', onDocClick)
       return () => document.removeEventListener('click', onDocClick)
     }, [])
-  const tripJPY = tripReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-  const tripTWD = tripReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+  const tripJPY = personalTotal(tripReceipts, 'JPY', settings.user1, settings.user2)
+  const tripTWD = personalTotal(tripReceipts, 'TWD', settings.user1, settings.user2)
   const split = calcSplit(tripReceipts, settings.user1, settings.user2)
 
   // 鍵盤左右鍵與 Home 支援
@@ -166,7 +166,7 @@ export default function Home() {
             {tripDayTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
           </div>
           <div className="card">
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅程累計</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅程累計（{settings.user1}）</div>
             <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
             {tripTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
           </div>
