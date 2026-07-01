@@ -7,7 +7,7 @@ import { Receipt } from '@/lib/types'
 
 const TAG_MAP: Record<string, string> = {
   '餐飲': 'tag-食', '交通': 'tag-交', '購物': 'tag-購',
-  '門票': 'tag-門', '住宿': 'tag-住', '藥品': 'tag-藥', '其他': 'tag-其'
+  '門票': 'tag-門', '住宿': 'tag-住', '藥品': 'tag-藥', '代買': 'tag-代', '其他': 'tag-其'
 }
 
 export default function HistoryPage() {

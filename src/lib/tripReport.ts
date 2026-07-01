@@ -1,7 +1,7 @@
 import { Receipt, Trip, AppSettings } from './types'
 import { calcSplit, attribute } from './split'
 
-const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
+const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const DIVIDER = '－－－－－－－－－－'
 
 // 將金額字串右對齊到同一寬度，數字部分在純文字分享時看起來才整齊

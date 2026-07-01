@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 
-const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
+const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
 
 export default function EditPage() {

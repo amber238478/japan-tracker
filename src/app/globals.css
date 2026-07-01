@@ -63,6 +63,7 @@ a { color: inherit; text-decoration: none; }
 .tag-門 { background: #F3EFF8; color: #7A5AA8; }
 .tag-住 { background: #E8F4F8; color: #2A7A9A; }
 .tag-藥 { background: var(--red-bg); color: var(--red); }
+.tag-代 { background: #FEF9EC; color: #B38700; }
 .tag-其 { background: var(--bg-surface); color: var(--text-muted); }
 
 /* Buttons */

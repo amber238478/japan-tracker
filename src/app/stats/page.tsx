@@ -5,10 +5,10 @@ import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings
 import { buildTripReport } from '@/lib/tripReport'
 import { Receipt, Category, Currency } from '@/lib/types'
 
-const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
+const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
   '餐飲': '#4A7A42', '交通': '#3A6AAA', '購物': '#C4875A',
-  '門票': '#7A5AA8', '住宿': '#2A7A9A', '藥品': '#C04040', '其他': '#A09A90'
+  '門票': '#7A5AA8', '住宿': '#2A7A9A', '藥品': '#C04040', '代買': '#B38700', '其他': '#A09A90'
 }
 
 function buildStats(receipts: Receipt[], currency: Currency, user1: string, user2: string) {
