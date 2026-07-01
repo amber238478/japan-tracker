@@ -26,7 +26,7 @@ function buildStats(receipts: Receipt[], currency: Currency, user1: string, user
     }
   }).filter(c => c.amt > 0).sort((a, b) => b.amt - a.amt)
 
-  const byPayment = ['現金', '信用卡', 'Suica', 'PayPay', '其他'].map(p => ({
+  const byPayment = ['現金', '信用卡-星展', '信用卡-熊本熊', '信用卡', 'Suica', 'PayPay', '其他'].map(p => ({
     name: p,
     amt: filtered.filter(r => r.paymentMethod === p).reduce((a, r) => a + r.amount, 0)
   })).filter(p => p.amt > 0).sort((a, b) => b.amt - a.amt)

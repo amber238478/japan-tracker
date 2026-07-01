@@ -5,7 +5,7 @@ import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod } from '@/lib/types'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '其他']
-const PAYMENTS: PaymentMethod[] = ['現金', '信用卡', 'Suica', 'PayPay', '其他']
+const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
 
 export default function AddPage() {
   const router = useRouter()
