@@ -15,6 +15,7 @@ export interface Receipt {
   paidBy: string
   splitWith: string | null  // null = no split (solo)
   splitRatio: number        // 0.5 = AA, custom ratio for paidBy person
+  proxyFor: string          // 代買對象，category=代買 時填入
   notes: string
 }
 

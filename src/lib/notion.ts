@@ -44,6 +44,7 @@ export async function getReceipts(): Promise<Receipt[]> {
         paidBy: p['付款人']?.rich_text?.[0]?.plain_text ?? '',
         splitWith: p['分帳對象']?.rich_text?.[0]?.plain_text ?? null,
         splitRatio: p['分帳比例']?.number ?? 0.5,
+        proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
         notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
       })
     }
@@ -80,6 +81,7 @@ export async function addReceipt(r: Receipt): Promise<string> {
   if (hasCurrencyField) properties['幣別'] = { select: { name: currency } }
   if (hasTwdField) properties['金額TWD'] = { number: currency === 'TWD' ? r.amount : 0 }
   if (hasTripField && r.trip) properties['行程'] = { select: { name: r.trip } }
+  if (propNames.has('代買對象')) properties['代買對象'] = { rich_text: [{ text: { content: r.proxyFor ?? '' } }] }
 
   const page = await notion.pages.create({ parent: { database_id: DB_ID }, properties })
   return page.id
@@ -106,6 +108,7 @@ export async function updateReceipt(notionId: string, r: Partial<Receipt>) {
   if (r.paidBy !== undefined) props['付款人'] = { rich_text: [{ text: { content: r.paidBy } }] }
   if (r.splitWith !== undefined) props['分帳對象'] = { rich_text: [{ text: { content: r.splitWith ?? '' } }] }
   if (r.splitRatio !== undefined) props['分帳比例'] = { number: r.splitRatio }
+  if (r.proxyFor !== undefined && propNames.has('代買對象')) props['代買對象'] = { rich_text: [{ text: { content: r.proxyFor ?? '' } }] }
   if (r.notes !== undefined) props['備註'] = { rich_text: [{ text: { content: r.notes } }] }
 
   await notion.pages.update({ page_id: notionId, properties: props })

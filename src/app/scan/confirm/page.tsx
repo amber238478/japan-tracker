@@ -104,6 +104,13 @@ export default function ConfirmPage() {
           </div>
         </div>
 
+        {form.category === '代買' && (
+          <div className="card">
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>代買對象</div>
+            <input value={form.proxyFor ?? ''} onChange={e => set('proxyFor', e.target.value)} placeholder="幫誰買？（例：媽媽）" />
+          </div>
+        )}
+
         {/* Split section */}
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>分帳（選填）</div>

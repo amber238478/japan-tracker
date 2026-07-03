@@ -16,7 +16,7 @@ export default function AddPage() {
     items: '', storeName: '', amount: '', currency: 'JPY' as 'JPY' | 'TWD',
     category: '餐飲' as Category, paymentMethod: '現金' as PaymentMethod,
     date: new Date().toISOString().split('T')[0],
-    paidBy: s.user1, splitWith: null as string | null, splitRatio: 0.5, notes: '',
+    paidBy: s.user1, splitWith: null as string | null, splitRatio: 0.5, proxyFor: '', notes: '',
     storeNameJa: '', itemsJa: '', region: '', trip: trip.name,
   })
 
@@ -90,6 +90,13 @@ export default function AddPage() {
             </select>
           </div>
         </div>
+
+        {form.category === '代買' && (
+          <div className="card">
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>代買對象</div>
+            <input value={form.proxyFor} onChange={e => set('proxyFor', e.target.value)} placeholder="幫誰買？（例：媽媽）" />
+          </div>
+        )}
 
         {/* Split */}
         <div className="card">

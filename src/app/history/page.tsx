@@ -88,6 +88,7 @@ export default function HistoryPage() {
                       <span className={`tag ${TAG_MAP[r.category] ?? 'tag-其'}`}>{r.category}</span>
                       <span>{r.paymentMethod}</span>
                       {r.splitWith && <span style={{ color: 'var(--accent)', fontSize: 10 }}>⇌ 分帳</span>}
+                      {r.category === '代買' && r.proxyFor && <span style={{ color: 'var(--text-hint)', fontSize: 10 }}>→ {r.proxyFor}</span>}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
