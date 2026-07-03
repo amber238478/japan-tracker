@@ -219,8 +219,10 @@ ${payRows.length > 0 ? `
           .page-break { page-break-before: always; }
           tr { page-break-inside: avoid; }
           section { page-break-inside: avoid; }
+          .table-scroll { overflow: visible !important; }
         }
         body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       `}</style>
 
       {/* 列印/返回按鈕（不列印） */}
@@ -306,15 +308,16 @@ ${payRows.length > 0 ? `
           <h3 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#666', borderBottom: '0.5px solid #ddd', paddingBottom: 4, marginBottom: 10 }}>
             完整消費明細
           </h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
+          <div className="table-scroll">
+          <table style={{ width: '100%', minWidth: 580, borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '28%' }} />
-              <col style={{ width: '18%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '13%' }} />
+              <col style={{ width: 72 }} />
+              <col style={{ width: 40 }} />
+              <col />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 44 }} />
+              <col style={{ width: 76 }} />
+              <col style={{ width: 72 }} />
             </colgroup>
             <thead>
               <tr style={{ background: '#f5f3f0' }}>
@@ -340,6 +343,7 @@ ${payRows.length > 0 ? `
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       </div>
     </>
