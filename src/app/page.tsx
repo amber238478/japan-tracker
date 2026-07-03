@@ -218,6 +218,11 @@ export default function Home() {
         </Link>
       </div>
 
+      {/* 浮空新增按鈕 */}
+      <button onClick={() => window.location.href = '/add'}
+        style={{ position: 'fixed', right: 20, bottom: 88, width: 52, height: 52, borderRadius: '50%', border: 'none', background: 'var(--accent)', color: 'white', fontSize: 26, cursor: 'pointer', boxShadow: '0 4px 16px rgba(176,112,64,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40 }}>
+        +
+      </button>
       <BottomNav />
     </main>
   )
