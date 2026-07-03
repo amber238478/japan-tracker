@@ -17,33 +17,38 @@ const PAYMENTS = ['現金', '信用卡-星展', '信用卡-熊本熊', '信用�
 // 合計統計：以原始金額計算，含各人付費小計
 function buildCombinedStats(receipts: Receipt[], currency: Currency, user1: string, user2: string) {
   const filtered = receipts.filter(r => r.currency === currency)
+  const grossTotal = filtered.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
   const total = filtered.reduce((a, r) => a + (r.category === '代買' ? -r.amount : r.amount), 0)
-  const byCat = CATEGORIES.filter(c => c !== '代買').map(c => {
+  const byCat = CATEGORIES.map(c => {
     const recs = filtered.filter(r => r.category === c)
-    return {
-      name: c, color: CAT_COLORS[c],
-      amt: recs.reduce((a, r) => a + r.amount, 0),
-      user1Amt: recs.filter(r => r.paidBy === user1).reduce((a, r) => a + r.amount, 0),
-      user2Amt: recs.filter(r => r.paidBy === user2).reduce((a, r) => a + r.amount, 0),
-    }
-  }).filter(c => c.amt > 0).sort((a, b) => b.amt - a.amt)
+    const amt = recs.reduce((a, r) => a + r.amount, 0)
+    return amt > 0 ? {
+      name: c, color: CAT_COLORS[c], amt,
+      isDeduction: c === '代買',
+      user1Amt: c !== '代買' ? recs.filter(r => r.paidBy === user1).reduce((a, r) => a + r.amount, 0) : 0,
+      user2Amt: c !== '代買' ? recs.filter(r => r.paidBy === user2).reduce((a, r) => a + r.amount, 0) : 0,
+    } : null
+  }).filter((c): c is NonNullable<typeof c> => c !== null).sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
   const byPayment = PAYMENTS.map(p => ({
     name: p, amt: filtered.filter(r => r.paymentMethod === p && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
   })).filter(p => p.amt > 0).sort((a, b) => b.amt - a.amt)
   const top10 = [...filtered].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
     .map(r => ({ ...r, displayAmt: r.amount }))
-  return { total, byCat, byPayment, top10 }
+  return { total, grossTotal, byCat, byPayment, top10 }
 }
 
 // 個人統計：以 attribute 計算，只顯示該人真實應負擔的金額
 function buildPersonStats(receipts: Receipt[], currency: Currency, user: string, otherUser: string) {
   const filtered = receipts.filter(r => r.currency === currency)
   const total = filtered.reduce((a, r) => a + attribute(r, user, otherUser)[0], 0)
+  const grossTotal = filtered.filter(r => r.category !== '代買').reduce((a, r) => a + attribute(r, user, otherUser)[0], 0)
   const byCat = CATEGORIES.map(c => {
-    const amt = filtered.filter(r => r.category === c)
+    const raw = filtered.filter(r => r.category === c)
       .reduce((a, r) => a + attribute(r, user, otherUser)[0], 0)
-    return amt > 0 ? { name: c, amt, color: CAT_COLORS[c] } : null
-  }).filter((c): c is NonNullable<typeof c> => c !== null).sort((a, b) => b.amt - a.amt)
+    const amt = Math.abs(raw)
+    const isDeduction = c === '代買'
+    return amt > 0 ? { name: c, amt, color: CAT_COLORS[c], isDeduction } : null
+  }).filter((c): c is NonNullable<typeof c> => c !== null).sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
   // 支付方式：只計算該人實際付款的收據（現金流）
   const myPaid = filtered.filter(r => r.paidBy === user)
   const myPaidTotal = myPaid.reduce((a, r) => a + r.amount, 0)
@@ -56,7 +61,7 @@ function buildPersonStats(receipts: Receipt[], currency: Currency, user: string,
     .filter(r => r.displayAmt > 0)
     .sort((a, b) => b.displayAmt - a.displayAmt)
     .slice(0, 10)
-  return { total, byCat, byPayment, byPaymentTotal: myPaidTotal, top10 }
+  return { total, grossTotal, byCat, byPayment, byPaymentTotal: myPaidTotal, top10 }
 }
 
 export default function StatsPage() {
@@ -155,9 +160,9 @@ export default function StatsPage() {
             : buildPersonStats(tripReceipts, currency,
                 tab === 'user1' ? settings.user1 : settings.user2,
                 tab === 'user1' ? settings.user2 : settings.user1)
-          if (stats.total === 0) return null
+          if (stats.total === 0 && stats.grossTotal === 0) return null
 
-          const paymentTotal = tab === 'all' ? stats.total : (stats as ReturnType<typeof buildPersonStats>).byPaymentTotal
+          const paymentTotal = tab === 'all' ? stats.grossTotal : (stats as ReturnType<typeof buildPersonStats>).byPaymentTotal
 
           return (
             <div key={currency}>
@@ -169,16 +174,24 @@ export default function StatsPage() {
                 {stats.byCat.map(c => (
                   <div key={c.name} style={{ marginBottom: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
+                      <span style={{ color: c.isDeduction ? 'var(--text-hint)' : 'var(--text-secondary)' }}>
+                        {c.isDeduction ? '↩ ' : ''}{c.name}
+                      </span>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontWeight: 500 }}>{symbol}{c.amt.toLocaleString()}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{stats.total > 0 ? Math.round(c.amt / stats.total * 100) : 0}%</span>
+                        <span style={{ fontWeight: 500, color: c.isDeduction ? 'var(--text-hint)' : undefined }}>
+                          {c.isDeduction ? '−' : ''}{symbol}{c.amt.toLocaleString()}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>
+                          {stats.grossTotal > 0 ? Math.round(c.amt / stats.grossTotal * 100) : 0}%
+                        </span>
                       </div>
                     </div>
                     <div className="progress-track">
-                      <div style={{ height: '100%', borderRadius: 2, background: c.color, width: `${stats.total > 0 ? (c.amt / stats.total) * 100 : 0}%`, transition: 'width 0.4s' }} />
+                      <div style={{ height: '100%', borderRadius: 2,
+                        background: c.isDeduction ? 'repeating-linear-gradient(90deg, var(--text-hint) 0px, var(--text-hint) 4px, transparent 4px, transparent 8px)' : c.color,
+                        width: `${stats.grossTotal > 0 ? (c.amt / stats.grossTotal) * 100 : 0}%`, transition: 'width 0.4s' }} />
                     </div>
-                    {tab === 'all' && 'user1Amt' in c && (c.user1Amt > 0 || c.user2Amt > 0) && (
+                    {tab === 'all' && !c.isDeduction && 'user1Amt' in c && (c.user1Amt > 0 || c.user2Amt > 0) && (
                       <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
                         {c.user1Amt > 0 && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{settings.user1} {symbol}{c.user1Amt.toLocaleString()}</span>}
                         {c.user1Amt > 0 && c.user2Amt > 0 && <span style={{ fontSize: 10, color: 'var(--border)' }}>·</span>}
