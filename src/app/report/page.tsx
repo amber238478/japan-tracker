@@ -45,18 +45,24 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
 
 function CatTable({ rows, symbol, style: s }: { rows: { name: string; amt: number; pct: number; color: string }[]; symbol: string; style?: React.CSSProperties }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, ...s }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed', ...s }}>
+      <colgroup>
+        <col style={{ width: 36 }} />
+        <col style={{ width: '55%' }} />
+        <col />
+        <col style={{ width: 32 }} />
+      </colgroup>
       <tbody>
         {rows.map(r => (
           <tr key={r.name}>
-            <td style={{ padding: '3px 0', width: 36, color: '#444', whiteSpace: 'nowrap' }}>{r.name}</td>
-            <td style={{ padding: '3px 8px', width: '55%' }}>
+            <td style={{ padding: '3px 0', color: '#444', whiteSpace: 'nowrap' }}>{r.name}</td>
+            <td style={{ padding: '3px 8px' }}>
               <div style={{ background: '#f0f0f0', borderRadius: 2, height: 5 }}>
                 <div style={{ width: `${r.pct}%`, height: '100%', borderRadius: 2, background: r.color }} />
               </div>
             </td>
             <td style={{ padding: '3px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>{symbol}{r.amt.toLocaleString()}</td>
-            <td style={{ padding: '3px 0 3px 6px', color: '#999', width: 32 }}>{r.pct}%</td>
+            <td style={{ padding: '3px 0 3px 6px', color: '#999', whiteSpace: 'nowrap' }}>{r.pct}%</td>
           </tr>
         ))}
       </tbody>
@@ -98,6 +104,111 @@ export default function ReportPage() {
 
   const sorted = [...tripReceipts].sort((a, b) => a.date.localeCompare(b.date))
 
+  const downloadHtml = () => {
+    const rows = sorted.map((r, i) => `
+      <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
+        <td>${r.date}</td>
+        <td>${r.category}</td>
+        <td>${r.items}</td>
+        <td>${r.storeName || ''}</td>
+        <td>${r.paidBy}</td>
+        <td>${r.paymentMethod}</td>
+        <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}</td>
+      </tr>`).join('')
+
+    const payRowsHtml = payRows.map(p => `
+      <tr>
+        <td style="padding:3px 0;width:90px;color:#444">${p.name}</td>
+        <td style="padding:3px 8px;width:50%">
+          <div style="background:#f0f0f0;border-radius:2px;height:5px">
+            <div style="width:${jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%;height:100%;border-radius:2px;background:#B07040"></div>
+          </div>
+        </td>
+        <td style="text-align:right;font-weight:500">¥${p.amt.toLocaleString()}</td>
+        <td style="padding:3px 0 3px 6px;color:#999;width:32px">${jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%</td>
+      </tr>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${trip.name} 旅行帳單</title>
+<style>
+  body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.6; max-width: 680px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+  h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #666; border-bottom: 0.5px solid #ddd; padding-bottom: 4px; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; table-layout: fixed; }
+  th { padding: 5px 6px; text-align: left; font-weight: 600; color: #555; border-bottom: 0.5px solid #ddd; white-space: nowrap; overflow: hidden; }
+  td { padding: 4px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-right, .td-right { text-align: right; }
+  @media print {
+    @page { size: A4; margin: 14mm 14mm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div style="margin-bottom:20px">
+  <h1>${trip.name} 旅行帳單</h1>
+  <div style="font-size:11px;color:#888">${trip.tripStart} ～ ${tripEndStr}　${trip.tripDays} 天　共 ${tripReceipts.length} 筆紀錄</div>
+</div>
+
+<section style="margin-bottom:18px">
+  <h3>旅程總支出</h3>
+  <div style="display:flex;gap:32px;font-size:13px">
+    ${jpyTotal > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong></div>` : ''}
+    ${twdTotal > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong></div>` : ''}
+  </div>
+</section>
+
+${(showJpy || showTwd) ? `
+<section style="margin-bottom:18px">
+  <h3>分帳結算</h3>
+  ${showJpy ? `<div style="font-size:13px;font-weight:500;margin-bottom:4px">${split.JPY.oweText}</div>` : ''}
+  ${showTwd ? `<div style="font-size:13px;font-weight:500">${split.TWD.oweText}</div>` : ''}
+</section>` : ''}
+
+${payRows.length > 0 ? `
+<section style="margin-bottom:18px">
+  <h3>支付方式（JPY）</h3>
+  <table style="table-layout:auto">
+    <tbody>${payRowsHtml}</tbody>
+  </table>
+</section>` : ''}
+
+<section>
+  <h3>完整消費明細</h3>
+  <table>
+    <colgroup>
+      <col style="width:11%">
+      <col style="width:8%">
+      <col style="width:28%">
+      <col style="width:18%">
+      <col style="width:8%">
+      <col style="width:14%">
+      <col style="width:13%">
+    </colgroup>
+    <thead>
+      <tr style="background:#f5f3f0">
+        <th>日期</th><th>分類</th><th>品項</th><th>店名</th><th>付款人</th><th>支付方式</th><th class="th-right" style="text-align:right">金額</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+</section>
+</body>
+</html>`
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${trip.name}-旅行帳單.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <>
       <style>{`
@@ -113,7 +224,7 @@ export default function ReportPage() {
       `}</style>
 
       {/* 列印/返回按鈕（不列印） */}
-      <div className="no-print" style={{ display: 'flex', gap: 10, padding: '16px 20px', borderBottom: '0.5px solid #eee', background: '#fafaf8' }}>
+      <div className="no-print" style={{ display: 'flex', gap: 10, padding: '16px 20px', borderBottom: '0.5px solid #eee', background: '#fafaf8', flexWrap: 'wrap' }}>
         <button onClick={() => history.back()}
           style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
           ← 返回
@@ -121,6 +232,10 @@ export default function ReportPage() {
         <button onClick={() => window.print()}
           style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#B07040', color: 'white', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
           列印 / 儲存 PDF
+        </button>
+        <button onClick={downloadHtml} disabled={loading}
+          style={{ padding: '7px 18px', borderRadius: 8, border: '0.5px solid #B07040', background: 'white', color: '#B07040', fontSize: 13, fontWeight: 500, cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
+          下載 HTML
         </button>
         {loading && <span style={{ fontSize: 12, color: '#999', alignSelf: 'center' }}>載入中...</span>}
       </div>
@@ -191,24 +306,33 @@ export default function ReportPage() {
           <h3 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#666', borderBottom: '0.5px solid #ddd', paddingBottom: 4, marginBottom: 10 }}>
             完整消費明細
           </h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9.5 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '28%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '13%' }} />
+            </colgroup>
             <thead>
               <tr style={{ background: '#f5f3f0' }}>
                 {['日期', '分類', '品項', '店名', '付款人', '支付方式', '金額'].map(h => (
-                  <th key={h} style={{ padding: '5px 6px', textAlign: h === '金額' ? 'right' : 'left', fontWeight: 600, color: '#555', borderBottom: '0.5px solid #ddd', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ padding: '5px 6px', textAlign: h === '金額' ? 'right' : 'left', fontWeight: 600, color: '#555', borderBottom: '0.5px solid #ddd', overflow: 'hidden' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sorted.map((r, i) => (
                 <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#fafaf8' }}>
-                  <td style={{ padding: '4px 6px', whiteSpace: 'nowrap', color: '#666' }}>{r.date}</td>
-                  <td style={{ padding: '4px 6px', whiteSpace: 'nowrap' }}>{r.category}</td>
-                  <td style={{ padding: '4px 6px', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
-                  <td style={{ padding: '4px 6px', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.storeName}</td>
-                  <td style={{ padding: '4px 6px', whiteSpace: 'nowrap' }}>{r.paidBy}</td>
-                  <td style={{ padding: '4px 6px', whiteSpace: 'nowrap', color: '#666' }}>{r.paymentMethod}</td>
-                  <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.category}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.storeName}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.paidBy}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.paymentMethod}</td>
+                  <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}
                     {r.splitWith && <span style={{ fontSize: 8.5, color: '#B07040', marginLeft: 3 }}>AA</span>}
                   </td>
