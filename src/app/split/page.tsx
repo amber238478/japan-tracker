@@ -25,7 +25,7 @@ export default function SplitPage() {
   const payerCurrencies = (['JPY', 'TWD'] as const).filter(c => tripReceipts.some(r => r.currency === c))
   const payerTotals = payerCurrencies.map(c => {
     const recs = tripReceipts.filter(r => r.currency === c)
-    const soloRecs = recs.filter(r => !r.splitWith)
+    const soloRecs = recs.filter(r => !r.splitWith && r.category !== '代買')
     const soloUser1 = soloRecs.filter(r => r.paidBy === s.user1).reduce((a, r) => a + r.amount, 0)
     const soloUser2 = soloRecs.filter(r => r.paidBy === s.user2).reduce((a, r) => a + r.amount, 0)
     const cs = split[c]

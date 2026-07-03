@@ -72,8 +72,8 @@ export default function Home() {
     const displayDate = showRealToday ? today : tripDisplayDate
     const dayNum = showRealToday ? 0 : dayOffset + 1
     const tripDayReceipts = tripReceipts.filter(r => r.date === displayDate)
-    const tripDayJPY = tripDayReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-    const tripDayTWD = tripDayReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+    const tripDayJPY = tripDayReceipts.filter(r => r.currency !== 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+    const tripDayTWD = tripDayReceipts.filter(r => r.currency === 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
     // 建立旅程日期選單資料
     const tripDaysArray = Array.from({ length: trip.tripDays }, (_, i) => {
       const d = new Date(trip.tripStart)

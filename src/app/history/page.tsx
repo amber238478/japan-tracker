@@ -23,8 +23,8 @@ export default function HistoryPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const totalJPY = tripReceipts.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-  const totalTWD = tripReceipts.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+  const totalJPY = tripReceipts.filter(r => r.currency !== 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+  const totalTWD = tripReceipts.filter(r => r.currency === 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
 
   // Group by date
   const grouped: Record<string, Receipt[]> = {}
@@ -62,8 +62,8 @@ export default function HistoryPage() {
         {loading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>載入中...</div>}
 
         {Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a)).map(([date, items]) => {
-          const dayJPY = items.filter(r => r.currency !== 'TWD').reduce((a, r) => a + r.amount, 0)
-          const dayTWD = items.filter(r => r.currency === 'TWD').reduce((a, r) => a + r.amount, 0)
+          const dayJPY = items.filter(r => r.currency !== 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+          const dayTWD = items.filter(r => r.currency === 'TWD' && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
           const d = new Date(date)
           const weekdays = ['日', '一', '二', '三', '四', '五', '六']
           return (

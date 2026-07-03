@@ -16,7 +16,7 @@ const PAYMENTS = ['現金', '信用卡-星展', '信用卡-熊本熊', '信用�
 
 // 合計統計：以原始金額計算，含各人付費小計
 function buildCombinedStats(receipts: Receipt[], currency: Currency, user1: string, user2: string) {
-  const filtered = receipts.filter(r => r.currency === currency)
+  const filtered = receipts.filter(r => r.currency === currency && r.category !== '代買')
   const total = filtered.reduce((a, r) => a + r.amount, 0)
   const byCat = CATEGORIES.map(c => {
     const recs = filtered.filter(r => r.category === c)
