@@ -4,7 +4,7 @@ import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { buildTripReport } from '@/lib/tripReport'
-import { attribute } from '@/lib/split'
+import { attribute, personalTotal } from '@/lib/split'
 import { Receipt, Currency } from '@/lib/types'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
@@ -125,6 +125,28 @@ export default function StatsPage() {
 
       <div className="page">
         {loading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>載入中...</div>}
+
+        {/* 個人真實花費總覽 */}
+        {tab !== 'all' && !loading && (
+          <div className="card" style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>
+              真實花費（個人支出＋分帳後）
+            </div>
+            {(() => {
+              const user = tab === 'user1' ? settings.user1 : settings.user2
+              const other = tab === 'user1' ? settings.user2 : settings.user1
+              const jpy = personalTotal(tripReceipts, 'JPY', user, other)
+              const twd = personalTotal(tripReceipts, 'TWD', user, other)
+              return (
+                <>
+                  {jpy > 0 && <div style={{ fontSize: 26, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>}
+                  {twd > 0 && <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
+                  {jpy === 0 && twd === 0 && <div style={{ fontSize: 13, color: 'var(--text-hint)' }}>尚無資料</div>}
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {(['JPY', 'TWD'] as Currency[]).map(currency => {
           const symbol = currency === 'JPY' ? '¥' : 'NT$'
