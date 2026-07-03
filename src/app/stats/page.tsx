@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { buildTripReport } from '@/lib/tripReport'
@@ -96,10 +97,17 @@ export default function StatsPage() {
     <main>
       <div style={{ padding: '20px 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 500 }}>統計分析</div>
-        <button onClick={shareReport} disabled={tripReceipts.length === 0}
-          style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', opacity: tripReceipts.length === 0 ? 0.5 : 1 }}>
-          📤 分享報表
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/report">
+            <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+              PDF
+            </button>
+          </Link>
+          <button onClick={shareReport} disabled={tripReceipts.length === 0}
+            style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer', opacity: tripReceipts.length === 0 ? 0.5 : 1 }}>
+            📤 分享
+          </button>
+        </div>
       </div>
 
       {/* Tab switcher */}
