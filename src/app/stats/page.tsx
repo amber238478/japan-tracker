@@ -16,9 +16,9 @@ const PAYMENTS = ['現金', '信用卡-星展', '信用卡-熊本熊', '信用�
 
 // 合計統計：以原始金額計算，含各人付費小計
 function buildCombinedStats(receipts: Receipt[], currency: Currency, user1: string, user2: string) {
-  const filtered = receipts.filter(r => r.currency === currency && r.category !== '代買')
-  const total = filtered.reduce((a, r) => a + r.amount, 0)
-  const byCat = CATEGORIES.map(c => {
+  const filtered = receipts.filter(r => r.currency === currency)
+  const total = filtered.reduce((a, r) => a + (r.category === '代買' ? -r.amount : r.amount), 0)
+  const byCat = CATEGORIES.filter(c => c !== '代買').map(c => {
     const recs = filtered.filter(r => r.category === c)
     return {
       name: c, color: CAT_COLORS[c],
@@ -28,9 +28,9 @@ function buildCombinedStats(receipts: Receipt[], currency: Currency, user1: stri
     }
   }).filter(c => c.amt > 0).sort((a, b) => b.amt - a.amt)
   const byPayment = PAYMENTS.map(p => ({
-    name: p, amt: filtered.filter(r => r.paymentMethod === p).reduce((a, r) => a + r.amount, 0)
+    name: p, amt: filtered.filter(r => r.paymentMethod === p && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
   })).filter(p => p.amt > 0).sort((a, b) => b.amt - a.amt)
-  const top10 = [...filtered].sort((a, b) => b.amount - a.amount).slice(0, 10)
+  const top10 = [...filtered].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
     .map(r => ({ ...r, displayAmt: r.amount }))
   return { total, byCat, byPayment, top10 }
 }

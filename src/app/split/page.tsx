@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
-import { calcSplit } from '@/lib/split'
+import { calcSplit, personalTotal } from '@/lib/split'
 import { CurrencySplitSummary, Receipt } from '@/lib/types'
 
 export default function SplitPage() {
@@ -21,18 +21,13 @@ export default function SplitPage() {
   const splitReceipts = tripReceipts.filter(r => r.splitWith)
   const currencies = (['JPY', 'TWD'] as const).filter(c => splitReceipts.some(r => r.currency === c))
 
-  // 各自真實花費：個人支出（沒有分帳，全額算自己的）+ 分帳後該負責的份額
+  // 各自真實花費：個人支出 + 分帳後份額 − 代買（personalTotal 透過 attribute 自動扣除代買）
   const payerCurrencies = (['JPY', 'TWD'] as const).filter(c => tripReceipts.some(r => r.currency === c))
-  const payerTotals = payerCurrencies.map(c => {
-    const recs = tripReceipts.filter(r => r.currency === c)
-    const soloRecs = recs.filter(r => !r.splitWith && r.category !== '代買')
-    const soloUser1 = soloRecs.filter(r => r.paidBy === s.user1).reduce((a, r) => a + r.amount, 0)
-    const soloUser2 = soloRecs.filter(r => r.paidBy === s.user2).reduce((a, r) => a + r.amount, 0)
-    const cs = split[c]
-    const user1Total = soloUser1 + cs.user1Should
-    const user2Total = soloUser2 + cs.user2Should
-    return { c, user1Total, user2Total }
-  })
+  const payerTotals = payerCurrencies.map(c => ({
+    c,
+    user1Total: personalTotal(tripReceipts, c, s.user1, s.user2),
+    user2Total: personalTotal(tripReceipts, c, s.user2, s.user1),
+  }))
 
   return (
     <main>

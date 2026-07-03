@@ -87,10 +87,10 @@ export default function ReportPage() {
   tripEnd.setDate(tripEnd.getDate() + trip.tripDays - 1)
   const tripEndStr = tripEnd.toISOString().split('T')[0]
 
-  const jpy = tripReceipts.filter(r => r.currency !== 'TWD' && r.category !== '代買')
-  const twd = tripReceipts.filter(r => r.currency === 'TWD' && r.category !== '代買')
-  const jpyTotal = jpy.reduce((a, r) => a + r.amount, 0)
-  const twdTotal = twd.reduce((a, r) => a + r.amount, 0)
+  const jpy = tripReceipts.filter(r => r.currency !== 'TWD')
+  const twd = tripReceipts.filter(r => r.currency === 'TWD')
+  const jpyTotal = jpy.reduce((a, r) => a + (r.category === '代買' ? -r.amount : r.amount), 0)
+  const twdTotal = twd.reduce((a, r) => a + (r.category === '代買' ? -r.amount : r.amount), 0)
 
   const split = calcSplit(tripReceipts, settings.user1, settings.user2)
   const showJpy = Math.abs(split.JPY.balance) >= 100

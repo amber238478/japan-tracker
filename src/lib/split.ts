@@ -47,9 +47,13 @@ export function calcSplit(receipts: Receipt[], user1: string, user2: string): Sp
   }
 }
 
-// 一筆收據各自歸屬的金額：代買不算自己的花費；沒有分帳全額算 paidBy，有分帳則依比例拆給兩人
+// 一筆收據各自歸屬的金額：代買是負數（從花費扣除）；沒有分帳全額算 paidBy，有分帳則依比例拆給兩人
 export function attribute(r: Receipt, user1: string, user2: string): [number, number] {
-  if (r.category === '代買') return [0, 0]
+  if (r.category === '代買') {
+    if (r.paidBy === user1) return [-r.amount, 0]
+    if (r.paidBy === user2) return [0, -r.amount]
+    return [0, 0]
+  }
   if (!r.splitWith) {
     if (r.paidBy === user1) return [r.amount, 0]
     if (r.paidBy === user2) return [0, r.amount]
