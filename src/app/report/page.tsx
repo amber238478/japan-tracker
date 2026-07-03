@@ -17,12 +17,14 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
   const jpyTotal = total(jpy)
   const twdTotal = total(twd)
 
-  const catRows = (receipts: Receipt[], grand: number) =>
+  const catRows = (receipts: Receipt[], grand: number): CatRow[] =>
     CATEGORIES.map(c => {
-      const amt = receipts.filter(r => r.category === c)
+      const raw = receipts.filter(r => r.category === c)
         .reduce((a, r) => a + attribute(r, name, otherName)[0], 0)
-      return amt > 0 ? { name: c, amt, pct: grand > 0 ? Math.round(amt / grand * 100) : 0, color: CAT_COLORS[c] } : null
-    }).filter((r): r is NonNullable<typeof r> => r !== null).sort((a, b) => b.amt - a.amt)
+      const amt = Math.abs(raw)
+      const isDeduction = c === '代買'
+      return amt > 0 ? { name: c, amt, pct: grand > 0 ? Math.round(amt / grand * 100) : 0, color: CAT_COLORS[c], isDeduction } : null
+    }).filter((r): r is CatRow => r !== null).sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
 
   const jpyCats = catRows(jpy, jpyTotal)
   const twdCats = catRows(twd, twdTotal)
@@ -43,7 +45,9 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
   )
 }
 
-function CatTable({ rows, symbol, style: s }: { rows: { name: string; amt: number; pct: number; color: string }[]; symbol: string; style?: React.CSSProperties }) {
+type CatRow = { name: string; amt: number; pct: number; color: string; isDeduction?: boolean }
+
+function CatTable({ rows, symbol, style: s }: { rows: CatRow[]; symbol: string; style?: React.CSSProperties }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed', ...s }}>
       <colgroup>
@@ -55,19 +59,33 @@ function CatTable({ rows, symbol, style: s }: { rows: { name: string; amt: numbe
       <tbody>
         {rows.map(r => (
           <tr key={r.name}>
-            <td style={{ padding: '3px 0', color: '#444', whiteSpace: 'nowrap' }}>{r.name}</td>
+            <td style={{ padding: '3px 0', color: r.isDeduction ? '#aaa' : '#444', whiteSpace: 'nowrap' }}>{r.isDeduction ? '↩ ' : ''}{r.name}</td>
             <td style={{ padding: '3px 8px' }}>
               <div style={{ background: '#f0f0f0', borderRadius: 2, height: 5 }}>
-                <div style={{ width: `${r.pct}%`, height: '100%', borderRadius: 2, background: r.color }} />
+                <div style={{ width: `${r.pct}%`, height: '100%', borderRadius: 2, background: r.isDeduction ? '#ccc' : r.color }} />
               </div>
             </td>
-            <td style={{ padding: '3px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>{symbol}{r.amt.toLocaleString()}</td>
+            <td style={{ padding: '3px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap', color: r.isDeduction ? '#aaa' : undefined }}>
+              {r.isDeduction ? '−' : ''}{symbol}{r.amt.toLocaleString()}
+            </td>
             <td style={{ padding: '3px 0 3px 6px', color: '#999', whiteSpace: 'nowrap' }}>{r.pct}%</td>
           </tr>
         ))}
       </tbody>
     </table>
   )
+}
+
+function buildCombinedCats(receipts: Receipt[], currency: string): CatRow[] {
+  const filtered = receipts.filter(r => r.currency === currency)
+  const grossTotal = filtered.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+  const rows: CatRow[] = CATEGORIES.map(c => {
+    const amt = filtered.filter(r => r.category === c).reduce((a, r) => a + r.amount, 0)
+    if (amt === 0) return null
+    const isDeduction = c === '代買'
+    return { name: c, amt, pct: grossTotal > 0 ? Math.round(amt / grossTotal * 100) : 0, color: CAT_COLORS[c], isDeduction }
+  }).filter((r): r is CatRow => r !== null)
+  return rows.sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
 }
 
 export default function ReportPage() {
@@ -99,13 +117,39 @@ export default function ReportPage() {
   const PAYMENTS = ['現金', '信用卡-星展', '信用卡-熊本熊', '信用卡', 'Suica', 'PayPay', '其他']
   const payRows = PAYMENTS.map(p => ({
     name: p,
-    amt: jpy.filter(r => r.paymentMethod === p).reduce((a, r) => a + r.amount, 0)
+    amt: jpy.filter(r => r.paymentMethod === p && r.category !== '代買').reduce((a, r) => a + r.amount, 0)
   })).filter(p => p.amt > 0).sort((a, b) => b.amt - a.amt)
+
+  const combinedJpyCats = buildCombinedCats(tripReceipts, 'JPY')
+  const combinedTwdCats = buildCombinedCats(tripReceipts, 'TWD')
+  const grossJpy = jpy.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+  const top10jpy = [...jpy].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
+  const top10twd = [...twd].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
 
   const sorted = [...tripReceipts].sort((a, b) => a.date.localeCompare(b.date))
 
   const downloadHtml = () => {
-    const rows = sorted.map((r, i) => `
+    const catTableHtml = (rows: CatRow[], symbol: string) => rows.map(r => `
+      <tr>
+        <td style="padding:3px 0;color:${r.isDeduction ? '#aaa' : '#444'};white-space:nowrap">${r.isDeduction ? '↩ ' : ''}${r.name}</td>
+        <td style="padding:3px 8px;width:55%">
+          <div style="background:#f0f0f0;border-radius:2px;height:5px">
+            <div style="width:${r.pct}%;height:100%;border-radius:2px;background:${r.isDeduction ? '#ccc' : r.color}"></div>
+          </div>
+        </td>
+        <td style="padding:3px 0;text-align:right;font-weight:500;white-space:nowrap;color:${r.isDeduction ? '#aaa' : 'inherit'}">${r.isDeduction ? '−' : ''}${symbol}${r.amt.toLocaleString()}</td>
+        <td style="padding:3px 0 3px 6px;color:#999;white-space:nowrap">${r.pct}%</td>
+      </tr>`).join('')
+
+    const top10Html = (items: Receipt[], symbol: string) => items.map((r, i) => `
+      <tr style="border-bottom:0.5px solid #f0f0f0">
+        <td style="padding:4px 0;width:20px;color:#aaa;font-weight:500">${i + 1}</td>
+        <td style="padding:4px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.items}</td>
+        <td style="padding:4px 0;color:#888;white-space:nowrap;font-size:9px">${r.date} · ${r.storeName || r.category}</td>
+        <td style="padding:4px 0;text-align:right;font-weight:500;white-space:nowrap">${symbol}${r.amount.toLocaleString()}</td>
+      </tr>`).join('')
+
+    const detailRows = sorted.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
         <td>${r.date}</td>
         <td>${r.category}</td>
@@ -113,7 +157,7 @@ export default function ReportPage() {
         <td>${r.storeName || ''}</td>
         <td>${r.paidBy}</td>
         <td>${r.paymentMethod}</td>
-        <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}</td>
+        <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}${r.category === '代買' ? ' <span style="font-size:8px;color:#B38700">↩</span>' : ''}</td>
       </tr>`).join('')
 
     const payRowsHtml = payRows.map(p => `
@@ -121,11 +165,11 @@ export default function ReportPage() {
         <td style="padding:3px 0;width:90px;color:#444">${p.name}</td>
         <td style="padding:3px 8px;width:50%">
           <div style="background:#f0f0f0;border-radius:2px;height:5px">
-            <div style="width:${jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%;height:100%;border-radius:2px;background:#B07040"></div>
+            <div style="width:${grossJpy > 0 ? Math.round(p.amt / grossJpy * 100) : 0}%;height:100%;border-radius:2px;background:#B07040"></div>
           </div>
         </td>
         <td style="text-align:right;font-weight:500">¥${p.amt.toLocaleString()}</td>
-        <td style="padding:3px 0 3px 6px;color:#999;width:32px">${jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%</td>
+        <td style="padding:3px 0 3px 6px;color:#999;width:32px">${grossJpy > 0 ? Math.round(p.amt / grossJpy * 100) : 0}%</td>
       </tr>`).join('')
 
     const html = `<!DOCTYPE html>
@@ -141,7 +185,6 @@ export default function ReportPage() {
   table { width: 100%; border-collapse: collapse; font-size: 9.5px; table-layout: fixed; }
   th { padding: 5px 6px; text-align: left; font-weight: 600; color: #555; border-bottom: 0.5px solid #ddd; white-space: nowrap; overflow: hidden; }
   td { padding: 4px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .th-right, .td-right { text-align: right; }
   @media print {
     @page { size: A4; margin: 14mm 14mm; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -162,6 +205,13 @@ export default function ReportPage() {
   </div>
 </section>
 
+${combinedJpyCats.length > 0 || combinedTwdCats.length > 0 ? `
+<section style="margin-bottom:18px">
+  <h3>合計分類支出</h3>
+  ${combinedJpyCats.length > 0 ? `<table style="table-layout:fixed;margin-bottom:6px"><tbody>${catTableHtml(combinedJpyCats, '¥')}</tbody></table>` : ''}
+  ${combinedTwdCats.length > 0 ? `<table style="table-layout:fixed"><tbody>${catTableHtml(combinedTwdCats, 'NT$')}</tbody></table>` : ''}
+</section>` : ''}
+
 ${(showJpy || showTwd) ? `
 <section style="margin-bottom:18px">
   <h3>分帳結算</h3>
@@ -172,29 +222,33 @@ ${(showJpy || showTwd) ? `
 ${payRows.length > 0 ? `
 <section style="margin-bottom:18px">
   <h3>支付方式（JPY）</h3>
-  <table style="table-layout:auto">
-    <tbody>${payRowsHtml}</tbody>
-  </table>
+  <table style="table-layout:auto"><tbody>${payRowsHtml}</tbody></table>
+</section>` : ''}
+
+${top10jpy.length > 0 ? `
+<section style="margin-bottom:18px">
+  <h3>前十名消費（JPY）</h3>
+  <table style="table-layout:auto"><tbody>${top10Html(top10jpy, '¥')}</tbody></table>
+</section>` : ''}
+
+${top10twd.length > 0 ? `
+<section style="margin-bottom:18px">
+  <h3>前十名消費（TWD）</h3>
+  <table style="table-layout:auto"><tbody>${top10Html(top10twd, 'NT$')}</tbody></table>
 </section>` : ''}
 
 <section>
   <h3>完整消費明細</h3>
   <table>
     <colgroup>
-      <col style="width:11%">
-      <col style="width:8%">
-      <col style="width:28%">
-      <col style="width:18%">
-      <col style="width:8%">
-      <col style="width:14%">
-      <col style="width:13%">
+      <col style="width:11%"><col style="width:8%"><col style="width:28%"><col style="width:18%"><col style="width:8%"><col style="width:14%"><col style="width:13%">
     </colgroup>
     <thead>
       <tr style="background:#f5f3f0">
-        <th>日期</th><th>分類</th><th>品項</th><th>店名</th><th>付款人</th><th>支付方式</th><th class="th-right" style="text-align:right">金額</th>
+        <th>日期</th><th>分類</th><th>品項</th><th>店名</th><th>付款人</th><th>支付方式</th><th style="text-align:right">金額</th>
       </tr>
     </thead>
-    <tbody>${rows}</tbody>
+    <tbody>${detailRows}</tbody>
   </table>
 </section>
 </body>
@@ -290,11 +344,62 @@ ${payRows.length > 0 ? `
                     <td style={{ padding: '3px 0', width: 90, color: '#444' }}>{p.name}</td>
                     <td style={{ padding: '3px 8px', width: '50%' }}>
                       <div style={{ background: '#f0f0f0', borderRadius: 2, height: 5 }}>
-                        <div style={{ width: `${jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%`, height: '100%', borderRadius: 2, background: '#B07040' }} />
+                        <div style={{ width: `${grossJpy > 0 ? Math.round(p.amt / grossJpy * 100) : 0}%`, height: '100%', borderRadius: 2, background: '#B07040' }} />
                       </div>
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 500 }}>¥{p.amt.toLocaleString()}</td>
-                    <td style={{ padding: '3px 0 3px 6px', color: '#999', width: 32 }}>{jpyTotal > 0 ? Math.round(p.amt / jpyTotal * 100) : 0}%</td>
+                    <td style={{ padding: '3px 0 3px 6px', color: '#999', width: 32 }}>{grossJpy > 0 ? Math.round(p.amt / grossJpy * 100) : 0}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {/* 合計分類支出 */}
+        {(combinedJpyCats.length > 0 || combinedTwdCats.length > 0) && (
+          <section style={{ marginBottom: 18 }}>
+            <h3 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#666', borderBottom: '0.5px solid #ddd', paddingBottom: 4, marginBottom: 10 }}>
+              合計分類支出
+            </h3>
+            {combinedJpyCats.length > 0 && <CatTable rows={combinedJpyCats} symbol="¥" />}
+            {combinedTwdCats.length > 0 && <CatTable rows={combinedTwdCats} symbol="NT$" style={{ marginTop: 6 }} />}
+          </section>
+        )}
+
+        {/* 前十名消費 */}
+        {top10jpy.length > 0 && (
+          <section style={{ marginBottom: 18 }}>
+            <h3 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#666', borderBottom: '0.5px solid #ddd', paddingBottom: 4, marginBottom: 10 }}>
+              前十名消費（JPY）
+            </h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+              <tbody>
+                {top10jpy.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: '0.5px solid #f0f0f0' }}>
+                    <td style={{ padding: '4px 0', width: 20, color: '#aaa', fontWeight: 500 }}>{i + 1}</td>
+                    <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
+                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date} · {r.storeName || r.category}</td>
+                    <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>¥{r.amount.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {top10twd.length > 0 && (
+          <section style={{ marginBottom: 18 }}>
+            <h3 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#666', borderBottom: '0.5px solid #ddd', paddingBottom: 4, marginBottom: 10 }}>
+              前十名消費（TWD）
+            </h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+              <tbody>
+                {top10twd.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: '0.5px solid #f0f0f0' }}>
+                    <td style={{ padding: '4px 0', width: 20, color: '#aaa', fontWeight: 500 }}>{i + 1}</td>
+                    <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
+                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date} · {r.storeName || r.category}</td>
+                    <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>NT${r.amount.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
