@@ -11,7 +11,7 @@ export default function ConfirmPage() {
   const router = useRouter()
   const s = getSettings()
   const trip = getActiveTrip(s)
-  const [form, setForm] = useState<Partial<Receipt>>({})
+  const [form, setForm] = useState<Partial<Receipt>>({ splitWith: null, splitRatio: 0.5 })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
