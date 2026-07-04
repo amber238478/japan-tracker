@@ -274,6 +274,7 @@ ${top10twd.length > 0 ? `
           tr { page-break-inside: avoid; }
           section { page-break-inside: avoid; }
           .table-scroll { overflow: visible !important; }
+          .detail-table { min-width: 0 !important; }
         }
         body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; }
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -414,15 +415,15 @@ ${top10twd.length > 0 ? `
             完整消費明細
           </h3>
           <div className="table-scroll">
-          <table style={{ width: '100%', minWidth: 580, borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
+          <table className="detail-table" style={{ width: '100%', minWidth: 580, borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: 72 }} />
-              <col style={{ width: 40 }} />
-              <col />
-              <col style={{ width: 90 }} />
-              <col style={{ width: 44 }} />
-              <col style={{ width: 76 }} />
-              <col style={{ width: 72 }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '32%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '12%' }} />
             </colgroup>
             <thead>
               <tr style={{ background: '#f5f3f0' }}>
