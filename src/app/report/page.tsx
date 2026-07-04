@@ -123,6 +123,9 @@ export default function ReportPage() {
   const combinedJpyCats = buildCombinedCats(tripReceipts, 'JPY')
   const combinedTwdCats = buildCombinedCats(tripReceipts, 'TWD')
   const grossJpy = jpy.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+  const grossTwd = twd.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
+  const proxyJpy = jpy.filter(r => r.category === '代買').reduce((a, r) => a + r.amount, 0)
+  const proxyTwd = twd.filter(r => r.category === '代買').reduce((a, r) => a + r.amount, 0)
   const top10jpy = [...jpy].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
   const top10twd = [...twd].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
 
@@ -154,7 +157,7 @@ export default function ReportPage() {
         <td>${r.date}</td>
         <td>${r.category}</td>
         <td>${r.items}</td>
-        <td>${r.storeName || ''}</td>
+        <td>${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
         <td>${r.paidBy}</td>
         <td>${r.paymentMethod}</td>
         <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}${r.category === '代買' ? ' <span style="font-size:8px;color:#B38700">↩</span>' : ''}</td>
@@ -200,8 +203,8 @@ export default function ReportPage() {
 <section style="margin-bottom:18px">
   <h3>旅程總支出</h3>
   <div style="display:flex;gap:32px;font-size:13px">
-    ${jpyTotal > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong></div>` : ''}
-    ${twdTotal > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong></div>` : ''}
+    ${grossJpy > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong>${proxyJpy > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 ¥${grossJpy.toLocaleString()} · 代買 −¥${proxyJpy.toLocaleString()}</div>` : ''}</div>` : ''}
+    ${grossTwd > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong>${proxyTwd > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 NT$${grossTwd.toLocaleString()} · 代買 −NT$${proxyTwd.toLocaleString()}</div>` : ''}</div>` : ''}
   </div>
 </section>
 
@@ -312,8 +315,18 @@ ${top10twd.length > 0 ? `
             旅程總支出
           </h3>
           <div style={{ display: 'flex', gap: 32, fontSize: 13 }}>
-            {jpyTotal > 0 && <div>日幣<br /><strong style={{ fontSize: 17 }}>¥{jpyTotal.toLocaleString()}</strong></div>}
-            {twdTotal > 0 && <div>台幣<br /><strong style={{ fontSize: 17 }}>NT${twdTotal.toLocaleString()}</strong></div>}
+            {grossJpy > 0 && (
+              <div>
+                日幣<br /><strong style={{ fontSize: 17 }}>¥{jpyTotal.toLocaleString()}</strong>
+                {proxyJpy > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 ¥{grossJpy.toLocaleString()} · 代買 −¥{proxyJpy.toLocaleString()}</div>}
+              </div>
+            )}
+            {grossTwd > 0 && (
+              <div>
+                台幣<br /><strong style={{ fontSize: 17 }}>NT${twdTotal.toLocaleString()}</strong>
+                {proxyTwd > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 NT${grossTwd.toLocaleString()} · 代買 −NT${proxyTwd.toLocaleString()}</div>}
+              </div>
+            )}
           </div>
         </section>
 
@@ -438,7 +451,9 @@ ${top10twd.length > 0 ? `
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.category}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
-                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.storeName}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>
+                    {r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : r.storeName}
+                  </td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.paidBy}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.paymentMethod}</td>
                   <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
