@@ -161,14 +161,14 @@ export default function Home() {
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
           <div className="card">
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>當日支出</div>
-            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripDayJPY.toLocaleString()}</div>
-            {tripDayTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>當日支出</div>
+            <div className="mono" style={{ fontSize: 24, fontWeight: 500, color: 'var(--accent)' }}>¥{tripDayJPY.toLocaleString()}</div>
+            {tripDayTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
           </div>
           <div className="card">
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅程累計（{settings.user1}）</div>
-            <div style={{ fontSize: 22, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
-            {tripTWD > 0 && <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>累計（{settings.user1}）</div>
+            <div className="mono" style={{ fontSize: 24, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
+            {tripTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
           </div>
         </div>
 
@@ -176,10 +176,10 @@ export default function Home() {
 
         {/* Split summary */}
         {(Math.abs(split.JPY.balance) >= 100 || Math.abs(split.TWD.balance) >= 30) && (
-          <div style={{ background: 'var(--bg-warm)', border: '0.5px solid var(--accent-border)', borderRadius: 10, padding: '10px 14px', marginBottom: 14, borderLeft: '2px solid var(--accent)' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>分帳摘要</div>
-            {Math.abs(split.JPY.balance) >= 100 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>{split.JPY.oweText}</div>}
-            {Math.abs(split.TWD.balance) >= 30 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 500 }}>{split.TWD.oweText}</div>}
+          <div style={{ background: 'var(--accent-light)', borderRadius: 12, padding: '10px 14px', marginBottom: 14, borderLeft: '3px solid var(--accent)' }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>分帳摘要</div>
+            {Math.abs(split.JPY.balance) >= 100 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>{split.JPY.oweText}</div>}
+            {Math.abs(split.TWD.balance) >= 30 && <div style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>{split.TWD.oweText}</div>}
           </div>
         )}
 
@@ -205,7 +205,7 @@ export default function Home() {
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
+              <div className="mono" style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
             </div>
           </div>
         ))}

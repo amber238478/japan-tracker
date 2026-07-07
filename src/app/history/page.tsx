@@ -51,10 +51,10 @@ export default function HistoryPage() {
 
       <div style={{ margin: '0 16px 14px' }}>
         <div className="card">
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>旅行總支出</div>
-          <div style={{ fontSize: 26, fontWeight: 500 }}>¥{totalJPY.toLocaleString()}</div>
-          {totalTWD > 0 && <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)' }}>NT${totalTWD.toLocaleString()}</div>}
-          <div style={{ fontSize: 12, color: 'var(--text-hint)' }}>{tripReceipts.length} 筆</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>旅行總支出</div>
+          <div className="mono" style={{ fontSize: 28, fontWeight: 500 }}>¥{totalJPY.toLocaleString()}</div>
+          {totalTWD > 0 && <div className="mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)' }}>NT${totalTWD.toLocaleString()}</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 2 }}>{tripReceipts.length} 筆</div>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
+                    <div className="mono" style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); deleteItem(r) }} style={{ background: 'none', border: 'none', color: 'var(--text-hint)', cursor: 'pointer', fontSize: 16, padding: '0 0 0 4px' }}>×</button>
                 </div>

@@ -1,25 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: #F5F5F5;
+  --bg: #F4F4F9;
   --bg-card: #FFFFFF;
-  --bg-surface: #F5F2ED;
-  --bg-warm: #FFF8F2;
-  --border: #E5E0D8;
-  --border-light: #EDE9E3;
-  --text-primary: #3A3530;
-  --text-secondary: #6B6560;
-  --text-muted: #A09A90;
-  --text-hint: #B5AFA6;
-  --accent: #C4875A;
-  --accent-light: #FFF0E6;
-  --accent-border: #F0D8C4;
-  --green: #4A7A42;
-  --green-bg: #EEF4EC;
-  --blue: #3A6AAA;
-  --blue-bg: #EDF2FA;
-  --red: #C04040;
-  --red-bg: #FBEAEA;
+  --bg-surface: #EDEDF4;
+  --bg-warm: #FFF6F3;
+  --border: #DCDCE8;
+  --border-light: #EAEAF2;
+  --text-primary: #111118;
+  --text-secondary: #46465C;
+  --text-muted: #8888A0;
+  --text-hint: #BBBBCC;
+  --accent: #F24B2B;
+  --accent-light: #FFF0EC;
+  --accent-border: #FFD0C4;
+  --green: #00A86B;
+  --green-bg: #E5F9F0;
+  --blue: #0077FF;
+  --blue-bg: #E5EEFF;
+  --red: #F03020;
+  --red-bg: #FFECEB;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,54 +43,55 @@ a { color: inherit; text-decoration: none; }
 /* Cards */
 .card {
   background: var(--bg-card);
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 14px 16px;
+  box-shadow: 0 2px 12px rgba(0,0,30,0.07), 0 0 0 0.5px rgba(0,0,30,0.04);
 }
 
 /* Tags */
 .tag {
   display: inline-block;
   font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
   letter-spacing: 0.03em;
 }
-.tag-食 { background: var(--green-bg); color: var(--green); }
-.tag-交 { background: var(--blue-bg); color: var(--blue); }
-.tag-購 { background: var(--accent-light); color: var(--accent); }
-.tag-門 { background: #F3EFF8; color: #7A5AA8; }
-.tag-住 { background: #E8F4F8; color: #2A7A9A; }
-.tag-藥 { background: var(--red-bg); color: var(--red); }
-.tag-代 { background: #FEF9EC; color: #B38700; }
+.tag-食 { background: #E5F9F0; color: #009960; }
+.tag-交 { background: #E5EEFF; color: #0066EE; }
+.tag-購 { background: #FFF0EC; color: #E03A20; }
+.tag-門 { background: #F0ECFF; color: #6A30D8; }
+.tag-住 { background: #E5F8FF; color: #0088BB; }
+.tag-藥 { background: #FFECEB; color: #E02010; }
+.tag-代 { background: #FFF8E0; color: #C07800; }
 .tag-其 { background: var(--bg-surface); color: var(--text-muted); }
 
 /* Buttons */
 .btn-primary {
   display: block;
   width: 100%;
-  background: var(--text-primary);
-  color: var(--bg);
+  background: var(--accent);
+  color: white;
   border: none;
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 15px;
   font-size: 15px;
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-align: center;
   letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(242,75,43,0.35);
 }
-.btn-primary:active { opacity: 0.85; }
+.btn-primary:active { opacity: 0.9; transform: scale(0.99); }
 
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: none;
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 8px 14px;
   font-size: 13px;
   font-family: inherit;
@@ -104,14 +105,17 @@ input, select, textarea {
   font-size: 14px;
   color: var(--text-primary);
   background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
   width: 100%;
   outline: none;
+  transition: border-color 0.15s, background 0.15s;
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(242,75,43,0.1);
 }
 
 /* Bottom nav */
@@ -122,45 +126,49 @@ input:focus, select:focus, textarea:focus {
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  background: var(--bg-card);
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-top: 0.5px solid var(--border);
   display: flex;
   justify-content: space-around;
   align-items: flex-end;
-  padding: 8px 0 16px;
+  padding: 8px 0 20px;
   z-index: 100;
 }
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   font-size: 10px;
   color: var(--text-hint);
   letter-spacing: 0.04em;
   cursor: pointer;
-  padding: 0 12px;
+  padding: 0 10px;
 }
-.nav-item.active { color: var(--text-primary); }
+.nav-item.active { color: var(--accent); }
 .nav-icon { font-size: 22px; line-height: 1; }
 
 .scan-fab {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: transparent;
-  border: 2px solid var(--accent);
+  background: var(--accent);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   cursor: pointer;
-  color: var(--accent);
-  font-size: 22px;
+  color: white;
+  font-size: 24px;
+  box-shadow: 0 4px 16px rgba(242,75,43,0.45);
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 .scan-fab:active {
-  background: var(--accent);
-  color: white;
+  transform: scale(0.93);
+  box-shadow: 0 2px 8px rgba(242,75,43,0.25);
 }
 
 /* Page wrapper */
@@ -176,21 +184,21 @@ input:focus, select:focus, textarea:focus {
   justify-content: space-between;
 }
 .page-title {
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 /* Progress bar */
 .progress-track {
-  height: 3px;
+  height: 4px;
   background: var(--border-light);
-  border-radius: 2px;
+  border-radius: 4px;
 }
 .progress-fill {
   height: 100%;
   background: var(--accent);
-  border-radius: 2px;
+  border-radius: 4px;
   transition: width 0.4s ease;
 }
 
@@ -202,10 +210,9 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   flex-shrink: 0;
-  border: 0.5px solid var(--border);
 }
 .avatar-1 { background: var(--green-bg); color: var(--green); }
 .avatar-2 { background: var(--blue-bg); color: var(--blue); }
@@ -215,9 +222,10 @@ input:focus, select:focus, textarea:focus {
 
 /* Section label */
 .section-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.08em;
-  padding: 12px 0 6px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 0 6px;
 }

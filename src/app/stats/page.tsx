@@ -134,7 +134,7 @@ export default function StatsPage() {
         {/* 個人真實花費總覽 */}
         {tab !== 'all' && !loading && (
           <div className="card" style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
               真實花費（個人支出＋分帳後）
             </div>
             {(() => {
@@ -144,8 +144,8 @@ export default function StatsPage() {
               const twd = personalTotal(tripReceipts, 'TWD', user, other)
               return (
                 <>
-                  {jpy > 0 && <div style={{ fontSize: 26, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>}
-                  {twd > 0 && <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
+                  {jpy > 0 && <div className="mono" style={{ fontSize: 28, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>}
+                  {twd > 0 && <div className="mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
                   {jpy === 0 && twd === 0 && <div style={{ fontSize: 13, color: 'var(--text-hint)' }}>尚無資料</div>}
                 </>
               )
