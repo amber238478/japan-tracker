@@ -277,6 +277,11 @@ ${top10twd.length > 0 ? `
             max-width: none !important; margin: 0 !important;
             background: white !important; padding: 0 !important;
           }
+          .report-content {
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
           .page-break { page-break-before: always; }
           tr { page-break-inside: avoid; }
           section { page-break-inside: avoid; }
@@ -304,7 +309,7 @@ ${top10twd.length > 0 ? `
       </div>
 
       {/* 報表本體 */}
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
+      <div className="report-content" style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
 
         {/* 標題 */}
         <div style={{ marginBottom: 20 }}>
