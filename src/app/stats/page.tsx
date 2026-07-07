@@ -101,7 +101,7 @@ export default function StatsPage() {
   return (
     <main>
       <div style={{ padding: '20px 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 20, fontWeight: 500 }}>統計分析</div>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>統計分析</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/report">
             <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -119,10 +119,10 @@ export default function StatsPage() {
       <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px' }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            style={{ padding: '6px 14px', borderRadius: 10, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
-              borderColor: tab === t.key ? 'var(--accent)' : 'var(--border)',
-              background: tab === t.key ? 'var(--accent-light)' : 'transparent',
-              color: tab === t.key ? 'var(--accent)' : 'var(--text-secondary)' }}>
+            style={{ padding: '6px 18px', borderRadius: 20, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: tab === t.key ? 600 : 400,
+              background: tab === t.key ? 'var(--accent)' : 'var(--bg-surface)',
+              color: tab === t.key ? 'white' : 'var(--text-secondary)',
+              boxShadow: tab === t.key ? '0 3px 10px var(--accent-glow, rgba(242,75,43,0.3))' : 'none' }}>
             {t.label}
           </button>
         ))}

@@ -46,7 +46,7 @@ export default function HistoryPage() {
   return (
     <main>
       <div style={{ padding: '20px 16px 12px' }}>
-        <div style={{ fontSize: 20, fontWeight: 500 }}>所有紀錄</div>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>所有紀錄</div>
       </div>
 
       <div style={{ margin: '0 16px 14px' }}>

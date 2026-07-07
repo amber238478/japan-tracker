@@ -47,7 +47,7 @@ export default function AddPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-secondary)' }}>←</button>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 500 }}>手動新增</div>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>手動新增</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>沒有收據時使用</div>
         </div>
       </div>

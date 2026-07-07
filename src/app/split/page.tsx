@@ -32,7 +32,7 @@ export default function SplitPage() {
   return (
     <main>
       <div style={{ padding: '20px 16px 12px' }}>
-        <div style={{ fontSize: 20, fontWeight: 500 }}>分帳結算</div>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>分帳結算</div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>結算金額只計算有標記分帳的消費，各自真實花費則是個人支出＋分帳後的份額</div>
       </div>
 
