@@ -154,7 +154,7 @@ export default function ReportPage() {
 
     const detailRows = sorted.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
-        <td>${r.date}</td>
+        <td>${r.date.slice(5)}</td>
         <td>${r.category}</td>
         <td>${r.items}</td>
         <td>${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
@@ -244,7 +244,7 @@ ${top10twd.length > 0 ? `
   <h3>完整消費明細</h3>
   <table>
     <colgroup>
-      <col style="width:11%"><col style="width:8%"><col style="width:28%"><col style="width:18%"><col style="width:8%"><col style="width:14%"><col style="width:13%">
+      <col style="width:10%"><col style="width:7%"><col style="width:28%"><col style="width:15%"><col style="width:7%"><col style="width:15%"><col style="width:18%">
     </colgroup>
     <thead>
       <tr style="background:#f5f3f0">
@@ -436,15 +436,15 @@ ${top10twd.length > 0 ? `
             完整消費明細
           </h3>
           <div className="table-scroll">
-          <table className="detail-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
+          <table className="detail-table" style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '12%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '14%' }} />
               <col style={{ width: '7%' }} />
-              <col style={{ width: '32%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '12%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '18%' }} />
             </colgroup>
             <thead>
               <tr style={{ background: '#f5f3f0' }}>
@@ -456,7 +456,7 @@ ${top10twd.length > 0 ? `
             <tbody>
               {sorted.map((r, i) => (
                 <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#fafaf8' }}>
-                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date}</td>
+                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date.slice(5)}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.category}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>
