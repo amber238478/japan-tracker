@@ -101,6 +101,20 @@ export default function ReportPage() {
     }).finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    const b = document.body
+    const h = document.documentElement
+    const prev = { bMax: b.style.maxWidth, bMargin: b.style.margin, hMax: h.style.maxWidth }
+    b.style.maxWidth = 'none'
+    b.style.margin = '0'
+    h.style.maxWidth = 'none'
+    return () => {
+      b.style.maxWidth = prev.bMax
+      b.style.margin = prev.bMargin
+      h.style.maxWidth = prev.hMax
+    }
+  }, [])
+
   const tripEnd = new Date(trip.tripStart)
   tripEnd.setDate(tripEnd.getDate() + trip.tripDays - 1)
   const tripEndStr = tripEnd.toISOString().split('T')[0]
