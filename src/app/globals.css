@@ -39,6 +39,17 @@ html, body {
 
 a { color: inherit; text-decoration: none; }
 
+@media print {
+  html, body {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 .mono { font-family: 'DM Mono', monospace; }
 
 /* Cards */

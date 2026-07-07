@@ -154,7 +154,7 @@ export default function ReportPage() {
 
     const detailRows = sorted.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
-        <td>${r.date}</td>
+        <td>${r.date.slice(5)}</td>
         <td>${r.category}</td>
         <td>${r.items}</td>
         <td>${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
