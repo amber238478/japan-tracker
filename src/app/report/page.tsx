@@ -148,7 +148,7 @@ export default function ReportPage() {
       <tr style="border-bottom:0.5px solid #f0f0f0">
         <td style="padding:4px 0;width:20px;color:#aaa;font-weight:500">${i + 1}</td>
         <td style="padding:4px 6px;word-break:break-all">${r.items}</td>
-        <td style="padding:4px 0;color:#888;white-space:nowrap;font-size:9px">${r.date} · ${r.storeName || r.category}</td>
+        <td style="padding:4px 0;color:#888;white-space:nowrap;font-size:9px">${r.date.slice(5)} · ${r.storeName || r.category}</td>
         <td style="padding:4px 0;text-align:right;font-weight:500;white-space:nowrap">${symbol}${r.amount.toLocaleString()}</td>
       </tr>`).join('')
 
@@ -401,7 +401,7 @@ ${top10twd.length > 0 ? `
                   <tr key={i} style={{ borderBottom: '0.5px solid #f0f0f0' }}>
                     <td style={{ padding: '4px 0', width: 20, color: '#aaa', fontWeight: 500 }}>{i + 1}</td>
                     <td style={{ padding: '4px 6px', wordBreak: 'break-all' }}>{r.items}</td>
-                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date} · {r.storeName || r.category}</td>
+                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date.slice(5)} · {r.storeName || r.category}</td>
                     <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>¥{r.amount.toLocaleString()}</td>
                   </tr>
                 ))}
@@ -420,7 +420,7 @@ ${top10twd.length > 0 ? `
                   <tr key={i} style={{ borderBottom: '0.5px solid #f0f0f0' }}>
                     <td style={{ padding: '4px 0', width: 20, color: '#aaa', fontWeight: 500 }}>{i + 1}</td>
                     <td style={{ padding: '4px 6px', wordBreak: 'break-all' }}>{r.items}</td>
-                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date} · {r.storeName || r.category}</td>
+                    <td style={{ padding: '4px 0', color: '#888', whiteSpace: 'nowrap', fontSize: 9.5 }}>{r.date.slice(5)} · {r.storeName || r.category}</td>
                     <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 500, whiteSpace: 'nowrap' }}>NT${r.amount.toLocaleString()}</td>
                   </tr>
                 ))}
