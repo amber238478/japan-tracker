@@ -24,7 +24,7 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
       const amt = Math.abs(raw)
       const isDeduction = c === '代買'
       return amt > 0 ? { name: c, amt, pct: grand > 0 ? Math.round(amt / grand * 100) : 0, color: CAT_COLORS[c], isDeduction } : null
-    }).filter((r): r is CatRow => r !== null).sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
+    }).filter((r): r is NonNullable<typeof r> => r !== null).sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
 
   const jpyCats = catRows(jpy, jpyTotal)
   const twdCats = catRows(twd, twdTotal)
@@ -79,11 +79,11 @@ function CatTable({ rows, symbol, style: s }: { rows: CatRow[]; symbol: string; 
 function buildCombinedCats(receipts: Receipt[], currency: string): CatRow[] {
   const filtered = receipts.filter(r => r.currency === currency)
   const grossTotal = filtered.filter(r => r.category !== '代買').reduce((a, r) => a + r.amount, 0)
-  const rows: CatRow[] = CATEGORIES.map(c => {
+  const rows = CATEGORIES.map(c => {
     const amt = filtered.filter(r => r.category === c).reduce((a, r) => a + r.amount, 0)
     if (amt === 0) return null
     const isDeduction = c === '代買'
-    return { name: c, amt, pct: grossTotal > 0 ? Math.round(amt / grossTotal * 100) : 0, color: CAT_COLORS[c], isDeduction }
+    return { name: c, amt, pct: grossTotal > 0 ? Math.round(amt / grossTotal * 100) : 0, color: CAT_COLORS[c], isDeduction } as CatRow
   }).filter((r): r is CatRow => r !== null)
   return rows.sort((a, b) => (a.isDeduction ? 1 : 0) - (b.isDeduction ? 1 : 0) || b.amt - a.amt)
 }
