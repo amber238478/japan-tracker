@@ -170,8 +170,8 @@ export default function ReportPage() {
       <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
         <td>${r.date.slice(5)}</td>
         <td>${r.category}</td>
-        <td>${r.items}</td>
-        <td>${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
+        <td style="white-space:normal;word-break:break-all">${r.items}</td>
+        <td style="white-space:normal;word-break:break-all">${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
         <td>${r.paidBy}</td>
         <td>${r.paymentMethod}</td>
         <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}${r.category === '代買' ? ' <span style="font-size:8px;color:#B38700">↩</span>' : ''}</td>
@@ -472,8 +472,8 @@ ${top10twd.length > 0 ? `
                 <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#fafaf8' }}>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date.slice(5)}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.category}</td>
-                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.items}</td>
-                  <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>
+                  <td style={{ padding: '4px 6px', wordBreak: 'break-all' }}>{r.items}</td>
+                  <td style={{ padding: '4px 6px', wordBreak: 'break-all', color: '#666' }}>
                     {r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : r.storeName}
                   </td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.paidBy}</td>
