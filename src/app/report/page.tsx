@@ -272,7 +272,11 @@ ${top10twd.length > 0 ? `
         @media print {
           .no-print { display: none !important; }
           @page { size: A4; margin: 14mm 14mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body {
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            max-width: none !important; margin: 0 !important;
+            background: white !important; padding: 0 !important;
+          }
           .page-break { page-break-before: always; }
           tr { page-break-inside: avoid; }
           section { page-break-inside: avoid; }
