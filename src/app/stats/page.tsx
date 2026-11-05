@@ -6,6 +6,7 @@ import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings
 import { buildTripReport } from '@/lib/tripReport'
 import { attribute, personalTotal } from '@/lib/split'
 import { Receipt, Currency } from '@/lib/types'
+import { fetchReceipts } from '@/lib/fetchReceipts'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -73,7 +74,7 @@ export default function StatsPage() {
   const [tab, setTab] = useState<'user1' | 'user2' | 'all'>('user1')
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
+    fetchReceipts().then(r => r.json()).then(d => {
       if (d.success) setReceipts(d.data)
     }).finally(() => setLoading(false))
   }, [])

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
+import { fetchReceipts, markReceiptsDirty } from '@/lib/fetchReceipts'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -17,7 +18,7 @@ export default function EditPage() {
   const [form, setForm] = useState<Partial<Receipt>>({})
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
+    fetchReceipts().then(r => r.json()).then(d => {
       if (d.success) {
         const found = (d.data as Receipt[]).find(r => r.notionId === id)
         if (found) setForm(found)
@@ -40,6 +41,7 @@ export default function EditPage() {
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
+      markReceiptsDirty()
       router.push('/history')
     } catch {
       alert('儲存失敗')

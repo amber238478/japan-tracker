@@ -5,6 +5,7 @@ import BottomNav from '@/components/BottomNav'
 import { getSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, personalTotal } from '@/lib/split'
 import { Receipt } from '@/lib/types'
+import { fetchReceipts } from '@/lib/fetchReceipts'
 
 const TAG_MAP: Record<string, string> = {
   '餐飲': 'tag-食', '交通': 'tag-交', '購物': 'tag-購',
@@ -16,7 +17,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/notion')
+    fetchReceipts()
       .then(r => r.json())
       .then(d => { if (d.success) setReceipts(d.data) })
       .finally(() => setLoading(false))
