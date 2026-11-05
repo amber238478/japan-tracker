@@ -12,6 +12,30 @@ async function getPropertyNames(): Promise<Set<string>> {
   return schemaCache
 }
 
+function parsePage(page: any): Receipt {
+  const p = page.properties
+  const currency = p['幣別']?.select?.name === 'TWD' ? 'TWD' : 'JPY'
+  return {
+    notionId: page.id,
+    trip: p['行程']?.select?.name ?? '',
+    storeName: p['商店名稱']?.rich_text?.[0]?.plain_text ?? '',
+    storeNameJa: p['商店日文']?.rich_text?.[0]?.plain_text ?? '',
+    items: p['項目']?.title?.[0]?.plain_text ?? '',
+    itemsJa: p['商品日文']?.rich_text?.[0]?.plain_text ?? '',
+    amount: currency === 'TWD' ? (p['金額TWD']?.number ?? 0) : (p['金額JPY']?.number ?? 0),
+    currency,
+    category: p['類別']?.select?.name ?? '其他',
+    paymentMethod: p['支付方式']?.select?.name ?? '現金',
+    date: p['日期']?.date?.start ?? '',
+    region: p['地區']?.rich_text?.[0]?.plain_text ?? '',
+    paidBy: p['付款人']?.rich_text?.[0]?.plain_text ?? '',
+    splitWith: p['分帳對象']?.rich_text?.[0]?.plain_text ?? null,
+    splitRatio: p['分帳比例']?.number ?? 0.5,
+    proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
+    notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
+  }
+}
+
 export async function getReceipts(): Promise<Receipt[]> {
   const results: Receipt[] = []
   let cursor: string | undefined = undefined
@@ -26,33 +50,18 @@ export async function getReceipts(): Promise<Receipt[]> {
 
     for (const page of res.results) {
       if (page.object !== 'page') continue
-      const p = (page as any).properties
-      const currency = p['幣別']?.select?.name === 'TWD' ? 'TWD' : 'JPY'
-      results.push({
-        notionId: page.id,
-        trip: p['行程']?.select?.name ?? '',
-        storeName: p['商店名稱']?.rich_text?.[0]?.plain_text ?? '',
-        storeNameJa: p['商店日文']?.rich_text?.[0]?.plain_text ?? '',
-        items: p['項目']?.title?.[0]?.plain_text ?? '',
-        itemsJa: p['商品日文']?.rich_text?.[0]?.plain_text ?? '',
-        amount: currency === 'TWD' ? (p['金額TWD']?.number ?? 0) : (p['金額JPY']?.number ?? 0),
-        currency,
-        category: p['類別']?.select?.name ?? '其他',
-        paymentMethod: p['支付方式']?.select?.name ?? '現金',
-        date: p['日期']?.date?.start ?? '',
-        region: p['地區']?.rich_text?.[0]?.plain_text ?? '',
-        paidBy: p['付款人']?.rich_text?.[0]?.plain_text ?? '',
-        splitWith: p['分帳對象']?.rich_text?.[0]?.plain_text ?? null,
-        splitRatio: p['分帳比例']?.number ?? 0.5,
-        proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
-        notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
-      })
+      results.push(parsePage(page))
     }
 
     cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined
   } while (cursor)
 
   return results
+}
+
+export async function getReceipt(notionId: string): Promise<Receipt> {
+  const page = await notion.pages.retrieve({ page_id: notionId })
+  return parsePage(page)
 }
 
 export async function addReceipt(r: Receipt): Promise<string> {
