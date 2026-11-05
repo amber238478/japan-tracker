@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, attribute } from '@/lib/split'
 import { Receipt } from '@/lib/types'
+import { fetchReceipts } from '@/lib/fetchReceipts'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -96,7 +97,7 @@ export default function ReportPage() {
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
+    fetchReceipts().then(r => r.json()).then(d => {
       if (d.success) setReceipts(d.data)
     }).finally(() => setLoading(false))
   }, [])

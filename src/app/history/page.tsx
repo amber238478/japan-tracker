@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { Receipt } from '@/lib/types'
+import { fetchReceipts, markReceiptsDirty } from '@/lib/fetchReceipts'
 
 const TAG_MAP: Record<string, string> = {
   '餐飲': 'tag-食', '交通': 'tag-交', '購物': 'tag-購',
@@ -18,7 +19,7 @@ export default function HistoryPage() {
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
+    fetchReceipts().then(r => r.json()).then(d => {
       if (d.success) setReceipts(d.data)
     }).finally(() => setLoading(false))
   }, [])
@@ -40,6 +41,7 @@ export default function HistoryPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notionId: r.notionId })
     })
+    markReceiptsDirty()
     setReceipts(prev => prev.filter(x => x.notionId !== r.notionId))
   }
 

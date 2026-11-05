@@ -4,6 +4,7 @@ import BottomNav from '@/components/BottomNav'
 import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, personalTotal } from '@/lib/split'
 import { CurrencySplitSummary, Receipt } from '@/lib/types'
+import { fetchReceipts } from '@/lib/fetchReceipts'
 
 export default function SplitPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
@@ -12,7 +13,7 @@ export default function SplitPage() {
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, s))
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
+    fetchReceipts().then(r => r.json()).then(d => {
       if (d.success) setReceipts(d.data)
     }).finally(() => setLoading(false))
   }, [])

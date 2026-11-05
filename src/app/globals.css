@@ -123,7 +123,19 @@ input, select, textarea {
   width: 100%;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
+  min-width: 0;
+  box-sizing: border-box;
 }
+
+/* iOS Safari 的日期欄位有內建最小寬度，會撐出卡片 */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  max-width: 100%;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
   background: white;

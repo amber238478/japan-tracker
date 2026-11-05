@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
+import { markReceiptsDirty } from '@/lib/fetchReceipts'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -17,12 +18,9 @@ export default function EditPage() {
   const [form, setForm] = useState<Partial<Receipt>>({})
 
   useEffect(() => {
-    fetch('/api/notion').then(r => r.json()).then(d => {
-      if (d.success) {
-        const found = (d.data as Receipt[]).find(r => r.notionId === id)
-        if (found) setForm(found)
-        else { alert('找不到這筆紀錄'); router.push('/history') }
-      }
+    fetch(`/api/notion/update?id=${encodeURIComponent(id)}`, { cache: 'no-store' }).then(r => r.json()).then(d => {
+      if (d.success && d.data) setForm(d.data as Receipt)
+      else { alert('找不到這筆紀錄'); router.push('/history') }
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -40,6 +38,7 @@ export default function EditPage() {
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
+      markReceiptsDirty()
       router.push('/history')
     } catch {
       alert('儲存失敗')
@@ -69,7 +68,7 @@ export default function EditPage() {
           <input value={form.storeName ?? ''} onChange={e => set('storeName', e.target.value)} placeholder="店名（選填）" />
         </div>
 
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>金額 *</div>
@@ -86,7 +85,7 @@ export default function EditPage() {
           </div>
         </div>
 
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>類別</div>
             <select value={form.category ?? '餐飲'} onChange={e => set('category', e.target.value)}>

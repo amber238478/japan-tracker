@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod } from '@/lib/types'
+import { markReceiptsDirty } from '@/lib/fetchReceipts'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -34,6 +35,7 @@ export default function AddPage() {
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
+      markReceiptsDirty()
       router.push('/')
     } catch {
       alert('儲存失敗')
@@ -59,7 +61,7 @@ export default function AddPage() {
           <input value={form.storeName} onChange={e => set('storeName', e.target.value)} placeholder="店名（選填）" />
         </div>
 
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>金額 *</div>
@@ -76,7 +78,7 @@ export default function AddPage() {
           </div>
         </div>
 
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>類別</div>
             <select value={form.category} onChange={e => set('category', e.target.value)}>
@@ -145,7 +147,7 @@ export default function AddPage() {
                   value={Math.round(form.splitRatio * 100)}
                   onChange={e => set('splitRatio', Number(e.target.value) / 100)}
                   style={{ width: '100%', marginBottom: 10 }} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{form.paidBy} 金額</div>
                     <input type="number" value={paidByAmt} onChange={e => setPaidByAmt(Number(e.target.value))} />

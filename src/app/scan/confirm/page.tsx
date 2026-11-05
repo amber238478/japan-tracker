@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
+import { markReceiptsDirty } from '@/lib/fetchReceipts'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -42,6 +43,7 @@ export default function ConfirmPage() {
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
+      markReceiptsDirty()
       sessionStorage.removeItem('scanned-receipt')
       router.push('/')
     } catch {
@@ -77,7 +79,7 @@ export default function ConfirmPage() {
         </div>
 
         {/* Amount & Date */}
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>金額（日幣）</div>
             <input type="number" value={form.amount ?? ''} onChange={e => set('amount', Number(e.target.value))} placeholder="0" />
@@ -89,7 +91,7 @@ export default function ConfirmPage() {
         </div>
 
         {/* Category & Payment */}
-        <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>類別</div>
             <select value={form.category ?? '餐飲'} onChange={e => set('category', e.target.value)}>
