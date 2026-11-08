@@ -17,6 +17,14 @@ export interface Receipt {
   splitRatio: number        // 0.5 = AA, custom ratio for paidBy person
   proxyFor: string          // 代買對象，category=代買 時填入
   notes: string
+  lineItems?: LineItem[]    // 收據分項明細（品名＋價格）
+}
+
+export interface LineItem {
+  name: string      // 中文品名
+  nameJa?: string   // 日文原文
+  qty?: number      // 數量（預設 1）
+  price: number     // 該行小計（已乘數量；折扣為負數）
 }
 
 export type Currency = 'JPY' | 'TWD'

@@ -18,9 +18,17 @@ const PROMPT = `你是一個日本收據辨識助手。分析這張收據圖片�
 - paymentMethod: 只能是：現金、信用卡-星展、信用卡-熊本熊、Suica、PayPay、其他
 - date: 收據日期 YYYY-MM-DD 格式，若看不出來用今天
 - notes: 稅制或折扣資訊（若無則空字串）
+- lineItems: 收據上的每一個品項（陣列），每項包含：
+  - name: 繁體中文品名（簡短）
+  - nameJa: 日文原文
+  - qty: 數量（整數，沒寫就 1）
+  - price: 該行的小計金額（整數日幣，已乘上數量，照收據印的數字）
+  - 折扣、割引、クーポン 也列成一項，price 用負數
+  - 若收據品項是「税抜」價格，另外加一項 {"name":"消費稅","nameJa":"消費税","qty":1,"price":稅額}，讓所有 price 加總等於 amountJPY
+  - 不要列小計、合計、找零、付款金額這類行
 
 只回傳 JSON，不要其他文字。格式：
-{"storeName":"","storeNameJa":"","items":"","itemsJa":"","amountJPY":0,"category":"餐飲","paymentMethod":"現金","date":"","notes":""}`
+{"storeName":"","storeNameJa":"","items":"","itemsJa":"","amountJPY":0,"category":"餐飲","paymentMethod":"現金","date":"","notes":"","lineItems":[{"name":"","nameJa":"","qty":1,"price":0}]}`
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,7 +53,7 @@ export async function POST(req: NextRequest) {
                   { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } }
                 ]
               }],
-              generationConfig: { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: 'application/json' }
+              generationConfig: { temperature: 0.1, maxOutputTokens: 4096, responseMimeType: 'application/json' }
             })
           }
         )

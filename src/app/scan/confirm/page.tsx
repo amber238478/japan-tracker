@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
+import { LineItemsEditor } from '@/components/LineItems'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -28,6 +29,11 @@ export default function ConfirmPage() {
       splitRatio: 0.5,
       date: data.date || new Date().toISOString().split('T')[0],
       trip: trip.name,
+      lineItems: Array.isArray(data.lineItems)
+        ? data.lineItems
+            .filter((x: any) => x && (x.name || x.nameJa))
+            .map((x: any) => ({ name: x.name || x.nameJa, nameJa: x.nameJa ?? '', qty: Number(x.qty) || 1, price: Math.round(Number(x.price)) || 0 }))
+        : [],
     })
   }, [])
 
@@ -77,6 +83,8 @@ export default function ConfirmPage() {
           <textarea value={form.items ?? ''} onChange={e => set('items', e.target.value)} placeholder="品項（中文）" rows={2} style={{ marginBottom: 8 }} />
           <textarea value={form.itemsJa ?? ''} onChange={e => set('itemsJa', e.target.value)} placeholder="品項（日文）" rows={2} />
         </div>
+
+        <LineItemsEditor items={form.lineItems ?? []} onChange={v => set('lineItems', v)} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} />
 
         {/* Amount & Date */}
         <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
