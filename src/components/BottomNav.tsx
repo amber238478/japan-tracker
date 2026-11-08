@@ -3,17 +3,22 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { resizeImageToBase64 } from '@/lib/image'
+import ScanOverlay from './ScanOverlay'
 
 export default function BottomNav() {
   const path = usePathname()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const [stage, setStage] = useState('')
 
   const handleFile = async (file: File) => {
     setBusy(true)
+    setStage('壓縮圖片中')
+    let done = false
     try {
       const { base64, mimeType } = await resizeImageToBase64(file)
+      setStage('AI 辨識收據中')
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -21,7 +26,9 @@ export default function BottomNav() {
       })
       const data = await res.json()
       if (data.success) {
+        setStage('整理結果中')
         sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
+        done = true  // 讀取畫面保留到確認頁出現
         router.push('/scan/confirm')
       } else {
         alert(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或使用上傳頁面')
@@ -30,7 +37,7 @@ export default function BottomNav() {
       console.error(err)
       alert('網路錯誤，請稍後重試')
     } finally {
-      setBusy(false)
+      if (!done) setBusy(false)
     }
   }
 
@@ -52,7 +59,7 @@ export default function BottomNav() {
             accept="image/*"
             capture
             style={{ display: 'none' }}
-            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+            onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }}
           />
           <button
             onClick={() => fileRef.current?.click()}
@@ -74,6 +81,7 @@ export default function BottomNav() {
           <span>分帳</span>
         </Link>
       </nav>
+      {busy && <ScanOverlay stage={stage} />}
     </>
   )
 }
