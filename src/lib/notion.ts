@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client'
-import { Receipt } from './types'
+import { LineItem, Receipt } from './types'
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const DB_ID = process.env.NOTION_DB_ID!
@@ -10,6 +10,42 @@ async function getPropertyNames(): Promise<Set<string>> {
   const db = await notion.databases.retrieve({ database_id: DB_ID })
   schemaCache = new Set(Object.keys((db as any).properties ?? {}))
   return schemaCache
+}
+
+const LINE_ITEMS_PROP = '明細'
+
+// 明細以 JSON 存在 rich_text 欄位；資料庫沒有這個欄位時自動建立
+async function ensureLineItemsProp(propNames: Set<string>): Promise<boolean> {
+  if (propNames.has(LINE_ITEMS_PROP)) return true
+  try {
+    await notion.databases.update({ database_id: DB_ID, properties: { [LINE_ITEMS_PROP]: { rich_text: {} } } as any })
+    propNames.add(LINE_ITEMS_PROP)
+    return true
+  } catch (e) {
+    console.error('無法自動建立「明細」欄位，請手動在 Notion 新增（文字類型）', e)
+    return false
+  }
+}
+
+function lineItemsToRichText(items: LineItem[] | undefined) {
+  const json = items && items.length ? JSON.stringify(items) : ''
+  const chunks: { text: { content: string } }[] = []
+  for (let i = 0; i < json.length; i += 1900) chunks.push({ text: { content: json.slice(i, i + 1900) } })
+  return { rich_text: chunks }
+}
+
+function parseLineItems(prop: any): LineItem[] {
+  const raw = (prop?.rich_text ?? []).map((t: any) => t.plain_text ?? '').join('')
+  if (!raw) return []
+  try {
+    const arr = JSON.parse(raw)
+    if (!Array.isArray(arr)) return []
+    return arr
+      .filter((x: any) => x && typeof x.name === 'string')
+      .map((x: any) => ({ name: x.name, nameJa: x.nameJa ?? '', qty: Number(x.qty) || 1, price: Number(x.price) || 0 }))
+  } catch {
+    return []
+  }
 }
 
 function parsePage(page: any): Receipt {
@@ -33,6 +69,7 @@ function parsePage(page: any): Receipt {
     splitRatio: p['分帳比例']?.number ?? 0.5,
     proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
     notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
+    lineItems: parseLineItems(p[LINE_ITEMS_PROP]),
   }
 }
 
@@ -91,6 +128,7 @@ export async function addReceipt(r: Receipt): Promise<string> {
   if (hasTwdField) properties['金額TWD'] = { number: currency === 'TWD' ? r.amount : 0 }
   if (hasTripField && r.trip) properties['行程'] = { select: { name: r.trip } }
   if (propNames.has('代買對象')) properties['代買對象'] = { rich_text: [{ text: { content: r.proxyFor ?? '' } }] }
+  if (r.lineItems?.length && await ensureLineItemsProp(propNames)) properties[LINE_ITEMS_PROP] = lineItemsToRichText(r.lineItems)
 
   const page = await notion.pages.create({ parent: { database_id: DB_ID }, properties })
   return page.id
@@ -119,6 +157,9 @@ export async function updateReceipt(notionId: string, r: Partial<Receipt>) {
   if (r.splitRatio !== undefined) props['分帳比例'] = { number: r.splitRatio }
   if (r.proxyFor !== undefined && propNames.has('代買對象')) props['代買對象'] = { rich_text: [{ text: { content: r.proxyFor ?? '' } }] }
   if (r.notes !== undefined) props['備註'] = { rich_text: [{ text: { content: r.notes } }] }
+  if (r.lineItems !== undefined && (propNames.has(LINE_ITEMS_PROP) || (r.lineItems.length && await ensureLineItemsProp(propNames)))) {
+    props[LINE_ITEMS_PROP] = lineItemsToRichText(r.lineItems)
+  }
 
   await notion.pages.update({ page_id: notionId, properties: props })
 }

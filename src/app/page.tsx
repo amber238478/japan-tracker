@@ -6,6 +6,7 @@ import { getSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsT
 import { calcSplit, personalTotal } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
+import { LineItemsView } from '@/components/LineItems'
 
 const TAG_MAP: Record<string, string> = {
   '餐飲': 'tag-食', '交通': 'tag-交', '購物': 'tag-購',
@@ -15,6 +16,7 @@ const TAG_MAP: Record<string, string> = {
 export default function Home() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
+  const [openId, setOpenId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchReceipts()
@@ -192,8 +194,12 @@ export default function Home() {
             <Link href="/scan" style={{ color: 'var(--accent)', marginTop: 8, display: 'inline-block' }}>掃描收據 →</Link>
           </div>
         )}
-        {tripDayReceipts.map((r, i) => (
-          <div key={i} className="card" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+        {tripDayReceipts.map((r, i) => {
+          const key = r.notionId ?? String(i)
+          const open = openId === key
+          return (
+          <div key={key} className="card" onClick={() => setOpenId(open ? null : key)} style={{ marginBottom: 8, cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div className={`avatar ${r.paidBy === settings.user1 ? 'avatar-1' : 'avatar-2'}`}>
               {(r.paidBy || settings.user1).charAt(0)}
             </div>
@@ -208,8 +214,20 @@ export default function Home() {
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <div className="mono" style={{ fontSize: 14, fontWeight: 500 }}>{r.currency === 'TWD' ? 'NT$' : '¥'}{r.amount.toLocaleString()}</div>
             </div>
+            <span style={{ fontSize: 10, color: 'var(--text-hint)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▼</span>
+            </div>
+              {open && (
+                <>
+                  <LineItemsView receipt={r} />
+                  <button onClick={e => { e.stopPropagation(); window.location.href = `/edit/${r.notionId}` }}
+                    style={{ marginTop: 10, width: '100%', padding: 8, borderRadius: 8, border: '0.5px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    ✎ 編輯這筆
+                  </button>
+                </>
+              )}
           </div>
-        ))}
+          )
+        })}
 
         {/* Quick add */}
         <Link href="/add" style={{ display: 'block', marginTop: 8 }}>

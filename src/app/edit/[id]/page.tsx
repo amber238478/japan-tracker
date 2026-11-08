@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
+import { LineItemsEditor } from '@/components/LineItems'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -67,6 +68,8 @@ export default function EditPage() {
           <input value={form.items ?? ''} onChange={e => set('items', e.target.value)} placeholder="例：拉麵、啤酒" style={{ marginBottom: 8 }} />
           <input value={form.storeName ?? ''} onChange={e => set('storeName', e.target.value)} placeholder="店名（選填）" />
         </div>
+
+        <LineItemsEditor items={form.lineItems ?? []} onChange={v => set('lineItems', v)} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} />
 
         <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
