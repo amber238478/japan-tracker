@@ -94,8 +94,10 @@ export default function Home() {
       document.addEventListener('click', onDocClick)
       return () => document.removeEventListener('click', onDocClick)
     }, [])
-  const tripJPY = personalTotal(tripReceipts, 'JPY', settings.user1, settings.user2)
-  const tripTWD = personalTotal(tripReceipts, 'TWD', settings.user1, settings.user2)
+  // 右上角累計：不含「購物」類別
+  const nonShopping = tripReceipts.filter(r => r.category !== '購物')
+  const tripJPY = personalTotal(nonShopping, 'JPY', settings.user1, settings.user2)
+  const tripTWD = personalTotal(nonShopping, 'TWD', settings.user1, settings.user2)
   const split = calcSplit(tripReceipts, settings.user1, settings.user2)
 
   // 鍵盤左右鍵與 Home 支援
@@ -169,7 +171,7 @@ export default function Home() {
             {tripDayTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
           </div>
           <div className="card">
-            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>累計（{settings.user1}）</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>累計（{settings.user1}）· 不含購物</div>
             <div className="mono" style={{ fontSize: 24, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
             {tripTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
           </div>
