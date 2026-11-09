@@ -154,6 +154,32 @@ export default function StatsPage() {
           </div>
         )}
 
+        {/* 總支出（不含購物）— 三個分頁都顯示 */}
+        {!loading && (() => {
+          const nonShop = tripReceipts.filter(r => r.category !== '購物')
+          const users: [string, string][] = tab === 'user1' ? [[settings.user1, settings.user2]]
+            : tab === 'user2' ? [[settings.user2, settings.user1]]
+            : [[settings.user1, settings.user2], [settings.user2, settings.user1]]
+          const sum = (list: Receipt[], c: Currency) => users.reduce((a, [u, o]) => a + personalTotal(list, c, u, o), 0)
+          const jpy = sum(nonShop, 'JPY'), twd = sum(nonShop, 'TWD')
+          const shopJPY = sum(tripReceipts, 'JPY') - jpy, shopTWD = sum(tripReceipts, 'TWD') - twd
+          if (jpy === 0 && twd === 0 && shopJPY === 0 && shopTWD === 0) return null
+          return (
+            <div className="card" style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+                總支出（不含購物）{tab === 'all' ? '· 兩人合計' : ''}
+              </div>
+              <div className="mono" style={{ fontSize: 28, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>
+              {(twd !== 0 || shopTWD !== 0) && <div className="mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
+              {(shopJPY !== 0 || shopTWD !== 0) && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                  已扣除購物 ¥{shopJPY.toLocaleString()}{shopTWD !== 0 ? ` · NT$${shopTWD.toLocaleString()}` : ''}
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
         {(['JPY', 'TWD'] as Currency[]).map(currency => {
           const symbol = currency === 'JPY' ? '¥' : 'NT$'
           const stats = tab === 'all'
