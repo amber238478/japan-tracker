@@ -1,12 +1,18 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import ClientLogger from '@/components/ClientLogger'
+
+// iOS 點輸入框時不要自動放大畫面
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
 
 export const metadata: Metadata = {
   title: '旅行記帳',
   description: '日本旅行收據辨識記帳',
   manifest: '/manifest.json',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',

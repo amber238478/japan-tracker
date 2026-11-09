@@ -21,7 +21,12 @@ export default function EditPage() {
 
   useEffect(() => {
     fetch(`/api/notion/update?id=${encodeURIComponent(id)}`, { cache: 'no-store' }).then(r => r.json()).then(d => {
-      if (d.success && d.data) setForm(d.data as Receipt)
+      if (d.success && d.data) {
+        const r = d.data as Receipt
+        // 舊資料若分帳對象跟付款人是同一人，自動改成另一人
+        if (r.splitWith && r.splitWith === r.paidBy) r.splitWith = r.paidBy === s.user1 ? s.user2 : s.user1
+        setForm(r)
+      }
       else { alert('找不到這筆紀錄'); router.push('/history') }
     }).finally(() => setLoading(false))
   }, [id])
@@ -118,7 +123,7 @@ export default function EditPage() {
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>付款人</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {[s.user1, s.user2].map(u => (
-                <button key={u} onClick={() => set('paidBy', u)}
+                <button key={u} onClick={() => setForm((f: any) => ({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
                   style={{ flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                     borderColor: form.paidBy === u ? 'var(--accent)' : 'var(--border)',
                     background: form.paidBy === u ? 'var(--accent-light)' : 'transparent',
