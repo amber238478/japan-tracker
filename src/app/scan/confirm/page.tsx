@@ -131,7 +131,7 @@ export default function ConfirmPage() {
             <div style={{ display: 'flex', gap: 8 }}>
               {[s.user1, s.user2].map(u => (
                 <button key={u}
-                  onClick={() => set('paidBy', u)}
+                  onClick={() => setForm((f: any) => ({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
                   style={{
                     flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid',
                     borderColor: form.paidBy === u ? 'var(--accent)' : 'var(--border)',
