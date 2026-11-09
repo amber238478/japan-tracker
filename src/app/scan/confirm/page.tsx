@@ -5,6 +5,7 @@ import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsEditor } from '@/components/LineItems'
+import SplitShare from '@/components/SplitShare'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -171,20 +172,7 @@ export default function ConfirmPage() {
           </div>
 
           {form.splitWith !== null && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                {form.paidBy} 的分擔比例：{Math.round((form.splitRatio ?? 0.5) * 100)}%
-              </div>
-              <input type="range" min="0" max="100" step="5"
-                value={Math.round((form.splitRatio ?? 0.5) * 100)}
-                onChange={e => set('splitRatio', Number(e.target.value) / 100)}
-                style={{ width: '100%' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-hint)', marginTop: 4 }}>
-                <span>{form.paidBy}: ¥{Math.round((form.amount ?? 0) * (form.splitRatio ?? 0.5)).toLocaleString()}</span>
-                <span>{form.splitWith}: ¥{Math.round((form.amount ?? 0) * (1 - (form.splitRatio ?? 0.5))).toLocaleString()}</span>
-              </div>
-            </div>
+            <SplitShare total={Number(form.amount) || 0} ratio={form.splitRatio ?? 0.5} paidBy={form.paidBy} splitWith={form.splitWith} currency={form.currency} onChange={v => set('splitRatio', v)} />
           )}
         </div>
 
