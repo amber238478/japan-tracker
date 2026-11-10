@@ -2,11 +2,12 @@
 import { useState } from 'react'
 
 /** 分帳比例：拉桿 + 兩人金額可自行輸入（輸入一邊，另一邊自動 = 總額 − 這邊） */
-export default function SplitShare({ total, ratio, paidBy, splitWith, currency, onChange }: {
+export default function SplitShare({ total, ratio, paidBy, splitWith, users, currency, onChange }: {
   total: number
   ratio: number            // paidBy 的分擔比例（0–1）
   paidBy?: string
   splitWith?: string | null
+  users?: [string, string]  // 兩位使用者，分帳對象空白時用來補上另一人
   currency?: string
   onChange: (ratio: number) => void
 }) {
@@ -15,6 +16,8 @@ export default function SplitShare({ total, ratio, paidBy, splitWith, currency, 
   const otherAmt = t - paidAmt
   const [draft, setDraft] = useState<{ field: 'paid' | 'other'; text: string } | null>(null)
   const sym = currency === 'TWD' ? 'NT$' : '¥'
+  const otherName = splitWith && splitWith !== paidBy ? splitWith
+    : users ? (paidBy === users[0] ? users[1] : users[0]) : splitWith
 
   const typeAmount = (field: 'paid' | 'other', text: string) => {
     setDraft({ field, text })
@@ -50,7 +53,7 @@ export default function SplitShare({ total, ratio, paidBy, splitWith, currency, 
         style={{ width: '100%', marginBottom: 10 }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
         {box('paid', paidBy, paidAmt)}
-        {box('other', splitWith, otherAmt)}
+        {box('other', otherName, otherAmt)}
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 6 }}>
         可直接輸入金額，另一人自動補足總額 {sym}{t.toLocaleString()}
