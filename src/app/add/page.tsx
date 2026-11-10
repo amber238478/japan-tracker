@@ -134,7 +134,7 @@ export default function AddPage() {
             </button>
           </div>
           {form.splitWith !== null && (
-            <SplitShare total={Number(form.amount) || 0} ratio={form.splitRatio} paidBy={form.paidBy} splitWith={form.splitWith} currency={form.currency} onChange={v => set('splitRatio', v)} />
+            <SplitShare users={[s.user1, s.user2]} total={Number(form.amount) || 0} ratio={form.splitRatio} paidBy={form.paidBy} splitWith={form.splitWith} currency={form.currency} onChange={v => set('splitRatio', v)} />
           )}
         </div>
 

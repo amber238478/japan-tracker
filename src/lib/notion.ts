@@ -65,7 +65,8 @@ function parsePage(page: any): Receipt {
     date: p['日期']?.date?.start ?? '',
     region: p['地區']?.rich_text?.[0]?.plain_text ?? '',
     paidBy: p['付款人']?.rich_text?.[0]?.plain_text ?? '',
-    splitWith: p['分帳對象']?.rich_text?.[0]?.plain_text ?? null,
+    // 空字串 = 不分帳（計算也是這樣看），統一成 null，避免畫面誤顯示成 AA 分帳
+    splitWith: p['分帳對象']?.rich_text?.[0]?.plain_text || null,
     splitRatio: p['分帳比例']?.number ?? 0.5,
     proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
     notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
