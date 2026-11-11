@@ -1,47 +1,14 @@
 'use client'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
-import { resizeImageToBase64 } from '@/lib/image'
+import { usePathname } from 'next/navigation'
+import { useRef } from 'react'
+import { useReceiptScan } from '@/lib/useReceiptScan'
 import ScanOverlay from './ScanOverlay'
 
 export default function BottomNav() {
   const path = usePathname()
-  const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
-  const [busy, setBusy] = useState(false)
-  const [stage, setStage] = useState('')
-
-  const handleFile = async (file: File) => {
-    setBusy(true)
-    setStage('壓縮圖片中')
-    let done = false
-    try {
-      const { base64, mimeType } = await resizeImageToBase64(file)
-      setStage('AI 辨識收據中')
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType }),
-        signal: AbortSignal.timeout(65000),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setStage('整理結果中')
-        sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
-        done = true  // 讀取畫面保留到確認頁出現
-        router.push('/scan/confirm')
-      } else {
-        if (data.detail) console.error('analyze detail:', data.detail)
-        alert(data.error || '辨識失敗，請重試或使用上傳頁面')
-      }
-    } catch (err) {
-      console.error(err)
-      alert('辨識逾時或網路不穩，請再試一次')
-    } finally {
-      if (!done) setBusy(false)
-    }
-  }
+  const { busy, stage, scan: handleFile } = useReceiptScan()
 
   return (
     <>

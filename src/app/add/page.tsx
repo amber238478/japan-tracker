@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import SplitShare from '@/components/SplitShare'
+import ScanOverlay from '@/components/ScanOverlay'
+import { useReceiptScan } from '@/lib/useReceiptScan'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -14,6 +16,8 @@ export default function AddPage() {
   const s = getSettings()
   const trip = getActiveTrip(s)
   const [saving, setSaving] = useState(false)
+  const uploadRef = useRef<HTMLInputElement>(null)
+  const { busy: scanning, stage, scan } = useReceiptScan()
   const [form, setForm] = useState({
     items: '', storeName: '', amount: '', currency: 'JPY' as 'JPY' | 'TWD',
     category: '餐飲' as Category, paymentMethod: '現金' as PaymentMethod,
@@ -49,11 +53,19 @@ export default function AddPage() {
     <main style={{ padding: '20px 16px 100px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-secondary)' }}>←</button>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 20, fontWeight: 700 }}>手動新增</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>沒有收據時使用</div>
         </div>
+        {/* 從相簿選收據照片 → AI 辨識 → 確認頁 */}
+        <button onClick={() => uploadRef.current?.click()} disabled={scanning}
+          style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 10, border: '1px solid var(--accent)', background: 'var(--accent-light)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          🖼️ 相簿上傳
+        </button>
+        <input ref={uploadRef} type="file" accept="image/*" style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) scan(f) }} />
       </div>
+      {scanning && <ScanOverlay stage={stage} />}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div className="card">
