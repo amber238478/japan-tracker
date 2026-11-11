@@ -57,14 +57,13 @@ export default function BottomNav() {
             ref={fileRef}
             type="file"
             accept="image/*"
-            capture
             style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }}
           />
           <button
             onClick={() => fileRef.current?.click()}
             className="scan-fab"
-            aria-label="開啟相機掃描"
+            aria-label="拍照或上傳收據"
             style={{ cursor: 'pointer' }}
             disabled={busy}
           >
