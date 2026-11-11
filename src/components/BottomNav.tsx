@@ -31,7 +31,8 @@ export default function BottomNav() {
         done = true  // 讀取畫面保留到確認頁出現
         router.push('/scan/confirm')
       } else {
-        alert(data.error ? `辨識失敗：${data.error}` : '辨識失敗，請重試或使用上傳頁面')
+        if (data.detail) console.error('analyze detail:', data.detail)
+        alert(data.error || '辨識失敗，請重試或使用上傳頁面')
       }
     } catch (err) {
       console.error(err)
