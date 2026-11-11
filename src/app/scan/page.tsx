@@ -31,7 +31,8 @@ export default function ScanPage() {
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64, mimeType })
+          body: JSON.stringify({ imageBase64: base64, mimeType }),
+        signal: AbortSignal.timeout(65000),
         })
         const data = await res.json()
         if (data.success) {
@@ -44,7 +45,7 @@ export default function ScanPage() {
           setAnalyzing(false)
         }
       } catch {
-        setError('網路錯誤，請重試')
+        setError('辨識逾時或網路不穩，請再試一次')
         setAnalyzing(false)
       }
     }
