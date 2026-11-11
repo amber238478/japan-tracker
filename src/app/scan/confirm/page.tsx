@@ -16,11 +16,13 @@ export default function ConfirmPage() {
   const trip = getActiveTrip(s)
   const [form, setForm] = useState<Partial<Receipt>>({ splitWith: null, splitRatio: 0.5 })
   const [saving, setSaving] = useState(false)
+  const [meta, setMeta] = useState<{ model: string; ms: number } | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('scanned-receipt')
     if (!raw) { router.push('/scan'); return }
     const data = JSON.parse(raw)
+    try { const m = sessionStorage.getItem('scanned-meta'); if (m) setMeta(JSON.parse(m)) } catch {}
     setForm({
       ...data,
       amount: data.amountJPY ?? data.amount ?? 0,
@@ -67,6 +69,7 @@ export default function ConfirmPage() {
         <div>
           <div style={{ fontSize: 18, fontWeight: 500 }}>確認收據內容</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>請確認或修改辨識結果</div>
+          {meta && <div style={{ fontSize: 10, color: 'var(--text-hint)' }}>AI 辨識 {(meta.ms / 1000).toFixed(1)} 秒 · {meta.model}</div>}
         </div>
       </div>
 

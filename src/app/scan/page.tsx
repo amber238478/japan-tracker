@@ -38,6 +38,7 @@ export default function ScanPage() {
         if (data.success) {
           setStage('整理結果中')
           sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
+        if (data.meta) sessionStorage.setItem('scanned-meta', JSON.stringify(data.meta))
           router.push('/scan/confirm')
         } else {
           if (data.detail) console.error('analyze detail:', data.detail)
