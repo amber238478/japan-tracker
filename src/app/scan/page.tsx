@@ -6,7 +6,8 @@ import ScanOverlay from '@/components/ScanOverlay'
 
 export default function ScanPage() {
   const router = useRouter()
-  const fileRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)     // 從相簿／檔案上傳
+  const cameraRef = useRef<HTMLInputElement>(null)   // 直接開相機
   const [preview, setPreview] = useState<string | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [error, setError] = useState('')
@@ -68,8 +69,8 @@ export default function ScanPage() {
         ) : (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>◎</div>
-            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>點擊上傳收據</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>支援 JPG、PNG、HEIC</div>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>點擊從相簿上傳收據</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>也可以用下方按鈕直接拍照 · 支援 JPG、PNG、HEIC</div>
           </div>
         )}
 
@@ -79,8 +80,17 @@ export default function ScanPage() {
 
       {error && <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 12, textAlign: 'center' }}>{error}</div>}
 
+      {/* 上傳：不加 capture，iPhone 可選照片圖庫或檔案 */}
       <input
         ref={fileRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }}
+      />
+      {/* 拍照：直接開後鏡頭 */}
+      <input
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="environment"
@@ -88,14 +98,21 @@ export default function ScanPage() {
         onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }}
       />
 
-      <div style={{ marginTop: 16 }}>
+      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
         <button
           className="btn-primary"
-          onClick={() => fileRef.current?.click()}
+          onClick={() => cameraRef.current?.click()}
           disabled={analyzing}
           style={{ opacity: analyzing ? 0.5 : 1 }}
         >
-          {analyzing ? '辨識中...' : '選擇圖片'}
+          📷 拍照
+        </button>
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={analyzing}
+          style={{ opacity: analyzing ? 0.5 : 1, width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--accent)', background: 'var(--accent-light)', color: 'var(--accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          🖼️ 從相簿上傳
         </button>
       </div>
 
