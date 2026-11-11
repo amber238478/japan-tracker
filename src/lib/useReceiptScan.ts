@@ -26,6 +26,7 @@ export function useReceiptScan() {
       if (data.success) {
         setStage('整理結果中')
         sessionStorage.setItem('scanned-receipt', JSON.stringify(data.data))
+        if (data.meta) sessionStorage.setItem('scanned-meta', JSON.stringify(data.meta))
         done = true // 讀取畫面保留到確認頁出現
         router.push('/scan/confirm')
       } else {
