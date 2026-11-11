@@ -232,11 +232,18 @@ export default function Home() {
         })}
 
         {/* Quick add */}
-        <Link href="/add" style={{ display: 'block', marginTop: 8 }}>
-          <div style={{ border: '0.5px dashed var(--border)', borderRadius: 12, padding: '12px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
-            + 手動新增
-          </div>
-        </Link>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 8, marginTop: 8 }}>
+          <Link href="/add" style={{ display: 'block' }}>
+            <div style={{ border: '0.5px dashed var(--border)', borderRadius: 12, padding: '12px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+              + 手動新增
+            </div>
+          </Link>
+          <Link href="/scan" style={{ display: 'block' }}>
+            <div style={{ border: '0.5px dashed var(--border)', borderRadius: 12, padding: '12px', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+              🖼️ 從相簿上傳
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* 浮空新增按鈕 */}
