@@ -16,18 +16,49 @@ const modelList = () => (MODELS.length ? MODELS : DEFAULT_MODELS)
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-// 太忙（503）或額度（429）時，同一個模型稍等再試一次
-async function callGemini(model: string, apiKey: string, body: string) {
+// 收據辨識不需要深度思考：關掉／調低思考，速度快很多
+// Gemini 2.5 用 thinkingBudget，Gemini 3 之後用 thinkingLevel
+function thinkingConfig(model: string) {
+  return model.startsWith('gemini-2.5') ? { thinkingBudget: 0 } : { thinkingLevel: 'low' }
+}
+
+function buildBody(model: string, imageBase64: string, mimeType: string, withThinking: boolean) {
+  // 新版模型已不支援 temperature 等取樣參數，所以不設定
+  const generationConfig: any = { maxOutputTokens: 8192, responseMimeType: 'application/json' }
+  if (withThinking) generationConfig.thinkingConfig = thinkingConfig(model)
+  return JSON.stringify({
+    contents: [{
+      parts: [
+        { text: PROMPT },
+        { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } }
+      ]
+    }],
+    generationConfig,
+  })
+}
+
+// 單一模型最多等 25 秒，且不超過整體期限
+// 太忙（503／429）稍等再試一次；思考設定不被接受（400）就拿掉再試
+async function callGemini(model: string, apiKey: string, imageBase64: string, mimeType: string, deadline: number) {
+  let withThinking = true
   let res: Response | null = null
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const remaining = deadline - Date.now()
+    if (remaining < 3000) break
     res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: buildBody(model, imageBase64, mimeType, withThinking),
+        signal: AbortSignal.timeout(Math.min(25000, remaining)),
+      }
     )
-    if (res.status !== 503 && res.status !== 429) break
-    if (attempt === 0) await sleep(1500)
+    if (res.status === 400 && withThinking) { withThinking = false; continue }
+    if ((res.status === 503 || res.status === 429) && attempt === 0) { await sleep(1500); continue }
+    break
   }
-  return res!
+  return res
 }
 
 const PROMPT = `你是一個日本收據辨識助手。分析這張收據圖片，回傳 JSON 格式資料。
@@ -62,22 +93,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'GEMINI_API_KEY 未設定，請到 Vercel 專案的 Environment Variables 新增' }, { status: 500 })
     }
 
-    // 新版模型已不支援 temperature 等取樣參數，所以不設定
-    const body = JSON.stringify({
-      contents: [{
-        parts: [
-          { text: PROMPT },
-          { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } }
-        ]
-      }],
-      generationConfig: { maxOutputTokens: 8192, responseMimeType: 'application/json' }
-    })
-
+    // 整體最多 50 秒（伺服器上限 60 秒），時間到就停止換模型
+    const deadline = Date.now() + 50000
     const errors: string[] = []
     const statuses: number[] = []
+    let timedOut = false
     for (const model of modelList()) {
+      if (deadline - Date.now() < 3000) { timedOut = true; break }
       try {
-        const res = await callGemini(model, apiKey, body)
+        const res = await callGemini(model, apiKey, imageBase64, mimeType, deadline)
+        if (!res) { timedOut = true; break }
 
         if (!res.ok) {
           statuses.push(res.status)
@@ -104,6 +129,7 @@ export async function POST(req: NextRequest) {
         const parsed = JSON.parse(clean)
         return NextResponse.json({ success: true, data: parsed })
       } catch (e) {
+        if ((e as any)?.name === 'TimeoutError' || (e as any)?.name === 'AbortError') timedOut = true
         const errText = `[${model}] ${String(e)}`
         errors.push(errText)
         console.error('analyze failed', errText)
@@ -112,7 +138,8 @@ export async function POST(req: NextRequest) {
 
     const busy = statuses.some(s => s === 503 || s === 429)
     const gone = statuses.length > 0 && statuses.every(s => s === 404)
-    const message = busy ? 'AI 目前太忙，請過幾秒再試一次'
+    const message = timedOut ? 'AI 回應太慢，請再試一次'
+      : busy ? 'AI 目前太忙，請過幾秒再試一次'
       : gone ? 'AI 模型已下架，需要更新設定（GEMINI_MODELS）'
       : '辨識失敗，請重拍清楚一點或改用手動輸入'
     return NextResponse.json({ success: false, error: message, detail: errors.join(' | ') }, { status: 500 })
