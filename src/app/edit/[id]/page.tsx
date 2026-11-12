@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
@@ -7,6 +7,7 @@ import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsEditor } from '@/components/LineItems'
 import SplitShare from '@/components/SplitShare'
 import { catLabel } from '@/lib/categories'
+import { compressForStorage } from '@/lib/image'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -18,6 +19,29 @@ export default function EditPage() {
   const s = getSettings()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+
+  // 附上／更換收據照片：壓縮後直接上傳到 Notion
+  const uploadPhoto = async (file: File) => {
+    setPhotoBusy(true)
+    try {
+      const { base64 } = await compressForStorage(file)
+      const res = await fetch('/api/notion/photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notionId: id, photo: base64, filename: `${form.date || 'receipt'}-${(form.storeName || 'receipt').slice(0, 20)}.jpg` }),
+      })
+      const d = await res.json()
+      if (!d.success) { alert('照片上傳失敗：' + (d.error || '未知錯誤')); return }
+      markReceiptsDirty()
+      setForm(f => ({ ...f, photoUrl: `data:image/jpeg;base64,${base64}` }))
+    } catch {
+      alert('照片上傳失敗，請重試')
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
   const [form, setForm] = useState<Partial<Receipt>>({})
 
   useEffect(() => {
@@ -42,7 +66,7 @@ export default function EditPage() {
       const res = await fetch('/api/notion/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notionId: id, data: { ...form, amount } })
+        body: JSON.stringify({ notionId: id, data: { ...form, amount, photoUrl: undefined } })
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
@@ -70,6 +94,21 @@ export default function EditPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {form.photoUrl
+            ? <a href={form.photoUrl} target="_blank" rel="noreferrer"><img src={form.photoUrl} alt="收據照片" style={{ width: 56, height: 72, objectFit: 'cover', borderRadius: 6, border: '0.5px solid var(--border)' }} /></a>
+            : <div style={{ width: 56, height: 72, borderRadius: 6, border: '0.5px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-hint)' }}>📷</div>}
+          <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
+            {form.photoUrl ? '已有收據照片' : '還沒有收據照片'}
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>會自動壓縮後存到 Notion</div>
+          </div>
+          <button onClick={() => photoRef.current?.click()} disabled={photoBusy}
+            style={{ flexShrink: 0, padding: '8px 12px', borderRadius: 10, border: '1px solid var(--accent)', background: 'var(--accent-light)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: photoBusy ? 0.5 : 1 }}>
+            {photoBusy ? '上傳中…' : form.photoUrl ? '更換' : '附上照片'}
+          </button>
+          <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) uploadPhoto(f) }} />
+        </div>
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>品項 *</div>
           <input value={form.items ?? ''} onChange={e => set('items', e.target.value)} placeholder="例：拉麵、啤酒" style={{ marginBottom: 8 }} />

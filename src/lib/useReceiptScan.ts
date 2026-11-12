@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { resizeImageToBase64 } from '@/lib/image'
+import { resizeImageToBase64, stashScannedPhoto } from '@/lib/image'
 
 /** 送出收據照片給 AI 辨識，成功後進確認頁（底部掃描按鈕、手動新增頁的相簿上傳共用） */
 export function useReceiptScan() {
@@ -14,7 +14,7 @@ export function useReceiptScan() {
     setStage('壓縮圖片中')
     let done = false
     try {
-      const { base64, mimeType } = await resizeImageToBase64(file)
+      const [{ base64, mimeType }] = await Promise.all([resizeImageToBase64(file), stashScannedPhoto(file)])
       setStage('AI 辨識收據中')
       const res = await fetch('/api/analyze', {
         method: 'POST',
