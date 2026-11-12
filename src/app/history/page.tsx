@@ -6,6 +6,7 @@ import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts, markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsView } from '@/components/LineItems'
+import { catLabel } from '@/lib/categories'
 
 const TAG_MAP: Record<string, string> = {
   '餐飲': 'tag-食', '交通': 'tag-交', '購物': 'tag-購',
@@ -93,7 +94,7 @@ export default function HistoryPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.items}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <span className={`tag ${TAG_MAP[r.category] ?? 'tag-其'}`}>{r.category}</span>
+                      <span className={`tag ${TAG_MAP[r.category] ?? 'tag-其'}`}>{catLabel(r.category)}</span>
                       <span>{r.paymentMethod}</span>
                       {r.splitWith && <span style={{ color: 'var(--accent)', fontSize: 10 }}>⇌ 分帳</span>}
                       {r.category === '代買' && r.proxyFor && <span style={{ color: 'var(--text-hint)', fontSize: 10 }}>→ {r.proxyFor}</span>}

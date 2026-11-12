@@ -7,6 +7,7 @@ import { buildTripReport } from '@/lib/tripReport'
 import { attribute, personalTotal } from '@/lib/split'
 import { Receipt, Currency } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
+import { isShopping, catLabel } from '@/lib/categories'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -156,7 +157,7 @@ export default function StatsPage() {
 
         {/* 總支出（不含購物）— 三個分頁都顯示 */}
         {!loading && (() => {
-          const nonShop = tripReceipts.filter(r => r.category !== '購物')
+          const nonShop = tripReceipts.filter(r => !isShopping(r.category))
           const users: [string, string][] = tab === 'user1' ? [[settings.user1, settings.user2]]
             : tab === 'user2' ? [[settings.user2, settings.user1]]
             : [[settings.user1, settings.user2], [settings.user2, settings.user1]]
@@ -167,13 +168,13 @@ export default function StatsPage() {
           return (
             <div className="card" style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-                總支出（不含購物）{tab === 'all' ? '· 兩人合計' : ''}
+                總支出（不含購物、購物-藥品）{tab === 'all' ? '· 兩人合計' : ''}
               </div>
               <div className="mono" style={{ fontSize: 28, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>
               {(twd !== 0 || shopTWD !== 0) && <div className="mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
               {(shopJPY !== 0 || shopTWD !== 0) && (
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                  已扣除購物 ¥{shopJPY.toLocaleString()}{shopTWD !== 0 ? ` · NT$${shopTWD.toLocaleString()}` : ''}
+                  已扣除購物（含藥品）¥{shopJPY.toLocaleString()}{shopTWD !== 0 ? ` · NT$${shopTWD.toLocaleString()}` : ''}
                 </div>
               )}
             </div>
@@ -202,7 +203,7 @@ export default function StatsPage() {
                   <div key={c.name} style={{ marginBottom: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
                       <span style={{ color: c.isDeduction ? 'var(--text-hint)' : 'var(--text-secondary)' }}>
-                        {c.isDeduction ? '↩ ' : ''}{c.name}
+                        {c.isDeduction ? '↩ ' : ''}{catLabel(c.name)}
                       </span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontWeight: 500, color: c.isDeduction ? 'var(--text-hint)' : undefined }}>

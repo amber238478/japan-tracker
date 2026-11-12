@@ -7,6 +7,7 @@ import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import SplitShare from '@/components/SplitShare'
 import ScanOverlay from '@/components/ScanOverlay'
 import { useReceiptScan } from '@/lib/useReceiptScan'
+import { catLabel } from '@/lib/categories'
 
 const CATEGORIES: Category[] = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const PAYMENTS: PaymentMethod[] = ['現金', '信用卡-星展', '信用卡-熊本熊', 'Suica', 'PayPay', '其他']
@@ -95,7 +96,7 @@ export default function AddPage() {
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>類別</div>
             <select value={form.category} onChange={e => set('category', e.target.value)}>
-              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              {CATEGORIES.map(c => <option key={c} value={c}>{catLabel(c)}</option>)}
             </select>
           </div>
           <div>
