@@ -8,11 +8,11 @@ export const DEFAULT_ITEM_SPLIT = 0.5
 
 export function splitOptions(user1: string, user2: string) {
   return [
-    { value: 0.5, label: '平分 5:5' },
+    { value: 0.5, label: '平分' },
     { value: 1, label: `${user1} 自己` },
     { value: 0, label: `${user2} 自己` },
     { value: 0.6, label: `${user1} 6 : ${user2} 4` },
-    { value: 0.4, label: `${user1} 4 : ${user2} 6` },
+    { value: 0.4, label: `${user2} 6 : ${user1} 4` },
   ]
 }
 
