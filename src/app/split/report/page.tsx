@@ -1,14 +1,21 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
+import { exportElementToPdf, isStandaloneApp, sharePdf } from '@/lib/pdfExport'
 
 /** 分帳明細報表：用瀏覽器「列印 → 儲存為 PDF」 */
 export default function SplitReportPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [readyFile, setReadyFile] = useState<File | null>(null) // 產生好但分享被擋，等使用者再點一次
+  const [canPrint, setCanPrint] = useState(false)
+  const reportRef = useRef<HTMLDivElement>(null)
+  // 加到主畫面的 App 不支援列印，只在瀏覽器裡顯示「列印」
+  useEffect(() => { setCanPrint(!isStandaloneApp()) }, [])
   const s = getSettings()
   const trip = getActiveTrip(s)
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, s))
@@ -47,6 +54,20 @@ export default function SplitReportPage() {
     return [u1, r.amount - u1]
   }
 
+  const savePdf = async () => {
+    if (!reportRef.current) return
+    setExporting(true)
+    try {
+      const { result, file } = await exportElementToPdf(reportRef.current, `${trip.name}-分帳明細.pdf`, `${trip.name} 分帳明細`)
+      if (result === 'blocked') setReadyFile(file)
+    } catch (e) {
+      console.error(e)
+      alert('PDF 產生失敗，請再試一次')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const today = new Date()
   const todayStr = `${today.getMonth() + 1}/${today.getDate()}`
 
@@ -80,15 +101,26 @@ export default function SplitReportPage() {
           style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
           ← 返回
         </button>
-        <button onClick={() => window.print()} disabled={loading}
-          style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#F24B2B', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
-          列印 / 儲存 PDF
+        <button onClick={savePdf} disabled={loading || exporting}
+          style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#F24B2B', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (loading || exporting) ? 0.5 : 1 }}>
+          {exporting ? 'PDF 產生中…' : '📄 儲存 / 分享 PDF'}
         </button>
+        {readyFile && (
+          <button onClick={async () => { const r = await sharePdf(readyFile, `${trip.name} 分帳明細`); if (r !== 'blocked') setReadyFile(null) }}
+            style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid #F24B2B', background: '#FFF0EC', color: '#F24B2B', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            ✅ PDF 已產生，點這裡分享／儲存
+          </button>
+        )}
+        {canPrint && (
+          <button onClick={() => window.print()} disabled={loading} style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
+            列印
+          </button>
+        )}
         {loading && <span style={{ fontSize: 12, color: '#999' }}>載入中...</span>}
-        {!loading && <span style={{ fontSize: 11, color: '#999' }}>iPhone：列印畫面點「分享」→「儲存到檔案」即為 PDF</span>}
+        {!loading && <span style={{ fontSize: 11, color: '#999' }}>iPhone 會跳出分享選單，選「儲存到檔案」或直接傳給對方</span>}
       </div>
 
-      <div className="report-content" style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
+      <div ref={reportRef} className="report-content" style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
         {/* 標題 */}
         <div style={{ marginBottom: 18 }}>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>{trip.name} 分帳明細</h1>
