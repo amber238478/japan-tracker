@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { resizeImageToBase64 } from '@/lib/image'
+import { resizeImageToBase64, stashScannedPhoto } from '@/lib/image'
 import ScanOverlay from '@/components/ScanOverlay'
 
 export default function ScanPage() {
@@ -26,7 +26,7 @@ export default function ScanPage() {
 
       try {
         setStage('壓縮圖片中')
-        const { base64, mimeType } = await resizeImageToBase64(file)
+        const [{ base64, mimeType }] = await Promise.all([resizeImageToBase64(file), stashScannedPhoto(file)])
         setStage('AI 辨識收據中')
         const res = await fetch('/api/analyze', {
           method: 'POST',

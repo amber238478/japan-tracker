@@ -48,6 +48,54 @@ function parseLineItems(prop: any): LineItem[] {
   }
 }
 
+const PHOTO_PROP = '收據照片'
+const NOTION_API = 'https://api.notion.com/v1'
+const NOTION_VERSION = '2022-06-28'
+
+async function ensurePhotoProp(propNames: Set<string>): Promise<boolean> {
+  if (propNames.has(PHOTO_PROP)) return true
+  try {
+    await notion.databases.update({ database_id: DB_ID, properties: { [PHOTO_PROP]: { files: {} } } as any })
+    propNames.add(PHOTO_PROP)
+    return true
+  } catch (e) {
+    console.error('無法自動建立「收據照片」欄位，請手動在 Notion 新增（檔案和媒體類型）', e)
+    return false
+  }
+}
+
+/** 用 Notion 的檔案上傳 API 上傳一張 JPEG，回傳 file_upload id */
+async function uploadPhotoToNotion(base64: string, filename: string): Promise<string> {
+  const headers = { Authorization: `Bearer ${process.env.NOTION_TOKEN}`, 'Notion-Version': NOTION_VERSION }
+  const created = await fetch(`${NOTION_API}/file_uploads`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename, content_type: 'image/jpeg' }),
+  })
+  const c = await created.json()
+  if (!created.ok) throw new Error(`file_uploads 建立失敗：${c.message ?? created.status}`)
+
+  const form = new FormData()
+  form.append('file', new Blob([Buffer.from(base64, 'base64')], { type: 'image/jpeg' }), filename)
+  const sent = await fetch(`${NOTION_API}/file_uploads/${c.id}/send`, { method: 'POST', headers, body: form })
+  if (!sent.ok) {
+    const e = await sent.json().catch(() => ({}))
+    throw new Error(`照片上傳失敗：${(e as any).message ?? sent.status}`)
+  }
+  return c.id
+}
+
+/** 把照片附到某一筆紀錄（會取代原本的照片） */
+export async function attachPhoto(pageId: string, base64: string, filename = 'receipt.jpg') {
+  const propNames = await getPropertyNames()
+  if (!(await ensurePhotoProp(propNames))) throw new Error('Notion 沒有「收據照片」欄位')
+  const id = await uploadPhotoToNotion(base64, filename)
+  await notion.pages.update({
+    page_id: pageId,
+    properties: { [PHOTO_PROP]: { files: [{ type: 'file_upload', file_upload: { id }, name: filename }] } } as any,
+  })
+}
+
 function parsePage(page: any): Receipt {
   const p = page.properties
   const currency = p['幣別']?.select?.name === 'TWD' ? 'TWD' : 'JPY'
@@ -71,6 +119,7 @@ function parsePage(page: any): Receipt {
     proxyFor: p['代買對象']?.rich_text?.[0]?.plain_text ?? '',
     notes: p['備註']?.rich_text?.[0]?.plain_text ?? '',
     lineItems: parseLineItems(p[LINE_ITEMS_PROP]),
+    photoUrl: (() => { const f = p[PHOTO_PROP]?.files?.[0]; return f?.file?.url ?? f?.external?.url ?? undefined })(),
   }
 }
 

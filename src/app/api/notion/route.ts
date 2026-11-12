@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getReceipts, addReceipt } from '@/lib/notion'
+import { getReceipts, addReceipt, attachPhoto } from '@/lib/notion'
 import { getCached, setCached, invalidateCache } from '@/lib/receiptsCache'
 
 export const dynamic = 'force-dynamic'
@@ -21,10 +21,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const receipt = await req.json()
+    const { photo, ...receipt } = await req.json()
     const id = await addReceipt(receipt)
+    // 照片另外上傳；失敗也不影響紀錄本身
+    let photoError: string | undefined
+    if (photo) {
+      try {
+        await attachPhoto(id, photo, `${receipt.date || 'receipt'}-${(receipt.storeName || 'receipt').slice(0, 20)}.jpg`)
+      } catch (e) {
+        photoError = String(e)
+        console.error('photo upload failed', e)
+      }
+    }
     invalidateCache()
-    return NextResponse.json({ success: true, id })
+    return NextResponse.json({ success: true, id, photoSaved: !!photo && !photoError, photoError })
   } catch (e) {
     return NextResponse.json({ success: false, error: String(e) }, { status: 500 })
   }

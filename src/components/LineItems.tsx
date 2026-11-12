@@ -81,6 +81,13 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
         </div>
       )}
 
+      {receipt.photoUrl && (
+        <a href={receipt.photoUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+          <img src={receipt.photoUrl} alt="收據照片" style={{ width: 44, height: 56, objectFit: 'cover', borderRadius: 6, border: '0.5px solid var(--border)' }} />
+          📷 看收據照片
+        </a>
+      )}
       {receipt.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>📝 {receipt.notes}</div>}
     </div>
   )

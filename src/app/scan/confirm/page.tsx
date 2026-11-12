@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
+import { SCANNED_PHOTO_KEY } from '@/lib/image'
 import { LineItemsEditor } from '@/components/LineItems'
 import SplitShare from '@/components/SplitShare'
 import { catLabel } from '@/lib/categories'
@@ -18,12 +19,14 @@ export default function ConfirmPage() {
   const [form, setForm] = useState<Partial<Receipt>>({ splitWith: null, splitRatio: 0.5 })
   const [saving, setSaving] = useState(false)
   const [meta, setMeta] = useState<{ model: string; ms: number } | null>(null)
+  const [photo, setPhoto] = useState<string | null>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('scanned-receipt')
     if (!raw) { router.push('/scan'); return }
     const data = JSON.parse(raw)
     try { const m = sessionStorage.getItem('scanned-meta'); if (m) setMeta(JSON.parse(m)) } catch {}
+    try { setPhoto(sessionStorage.getItem(SCANNED_PHOTO_KEY)) } catch {}
     setForm({
       ...data,
       amount: data.amountJPY ?? data.amount ?? 0,
@@ -49,12 +52,14 @@ export default function ConfirmPage() {
       const res = await fetch('/api/notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(photo ? { ...form, photo } : form)
       })
       const d = await res.json()
       if (!d.success) { alert('儲存失敗：' + (d.error || '未知錯誤')); return }
       markReceiptsDirty()
+      if (d.photoError) alert('紀錄已儲存，但照片上傳失敗：' + d.photoError)
       sessionStorage.removeItem('scanned-receipt')
+      sessionStorage.removeItem(SCANNED_PHOTO_KEY)
       router.push('/')
     } catch {
       alert('儲存失敗，請重試')
@@ -75,6 +80,15 @@ export default function ConfirmPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {photo && (
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src={`data:image/jpeg;base64,${photo}`} alt="收據照片" style={{ width: 56, height: 72, objectFit: 'cover', borderRadius: 6, border: '0.5px solid var(--border)' }} />
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              📷 收據照片會一起存到 Notion
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>已壓縮為 {Math.round(photo.length * 3 / 4 / 1024)} KB</div>
+            </div>
+          </div>
+        )}
         {/* Store */}
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>店家</div>

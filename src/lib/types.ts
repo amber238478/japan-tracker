@@ -18,6 +18,8 @@ export interface Receipt {
   proxyFor: string          // 代買對象，category=代買 時填入
   notes: string
   lineItems?: LineItem[]    // 收據分項明細（品名＋價格）
+  photoUrl?: string         // 收據照片（Notion 檔案連結，約 1 小時後失效，每次重新讀取）
+  photo?: string            // 新增時附上的照片（壓縮後 JPEG base64），只用於上傳
 }
 
 export interface LineItem {
