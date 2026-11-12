@@ -1,5 +1,6 @@
 'use client'
 import { LineItem, Receipt } from '@/lib/types'
+import { getSettings } from '@/lib/settings'
 
 const money = (n: number, currency?: string) => {
   const sign = n < 0 ? '-' : ''
@@ -14,6 +15,17 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
   const cur = receipt.currency
   const sum = sumLineItems(items)
   const diff = receipt.amount - sum
+
+  // 分帳金額：付款人負擔 = 總額 × 比例，另一人 = 剩下的
+  const st = getSettings()
+  const payerShare = Math.round(receipt.amount * (receipt.splitRatio ?? 0.5))
+  const otherName = receipt.paidBy === st.user1 ? st.user2 : st.user1
+  const shares = receipt.splitWith
+    ? [
+        { name: receipt.paidBy || st.user1, amt: payerShare, payer: true },
+        { name: otherName, amt: receipt.amount - payerShare, payer: false },
+      ].sort((a, b) => (a.name === st.user1 ? -1 : b.name === st.user1 ? 1 : 0))
+    : []
 
   return (
     <div style={{ borderTop: '1px dashed var(--border)', marginTop: 10, paddingTop: 10, fontSize: 12 }}>
@@ -53,6 +65,19 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
             <div key={i} style={{ padding: '2px 0' }}>• {s}</div>
           ))}
           <div style={{ fontSize: 11, color: 'var(--text-hint)', marginTop: 6 }}>這筆沒有分項價格，可到編輯頁補上</div>
+        </div>
+      )}
+
+      {shares.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          {shares.map(x => (
+            <div key={x.name} style={{ flex: 1, background: 'var(--accent-light)', borderRadius: 8, padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                {x.name}{x.payer && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>（付款）</span>}
+              </span>
+              <span className="mono" style={{ fontWeight: 600, color: 'var(--accent)' }}>{money(x.amt, cur)}</span>
+            </div>
+          ))}
         </div>
       )}
 
