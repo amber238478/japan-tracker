@@ -1,9 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, attribute } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
+import { exportElementToPdf, isStandaloneApp } from '@/lib/pdfExport'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -92,6 +93,11 @@ function buildCombinedCats(receipts: Receipt[], currency: string): CatRow[] {
 export default function ReportPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [canPrint, setCanPrint] = useState(false)
+  const reportRef = useRef<HTMLDivElement>(null)
+  // 加到主畫面的 App 不支援列印，只在瀏覽器裡顯示「列印」
+  useEffect(() => { setCanPrint(!isStandaloneApp()) }, [])
   const settings = getSettings()
   const trip = getActiveTrip(settings)
   const tripReceipts = receipts.filter(r => receiptBelongsToTrip(r.trip, settings))
@@ -115,6 +121,19 @@ export default function ReportPage() {
       h.style.maxWidth = prev.hMax
     }
   }, [])
+
+  const savePdf = async () => {
+    if (!reportRef.current) return
+    setExporting(true)
+    try {
+      await exportElementToPdf(reportRef.current, `${trip.name}-旅行帳單.pdf`, `${trip.name} 旅行帳單`)
+    } catch (e) {
+      console.error(e)
+      alert('PDF 產生失敗，請再試一次')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const tripEnd = new Date(trip.tripStart)
   tripEnd.setDate(tripEnd.getDate() + trip.tripDays - 1)
@@ -312,10 +331,15 @@ ${top10twd.length > 0 ? `
           style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
           ← 返回
         </button>
-        <button onClick={() => window.print()}
-          style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#B07040', color: 'white', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-          列印 / 儲存 PDF
+        <button onClick={savePdf} disabled={loading || exporting}
+          style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#F24B2B', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (loading || exporting) ? 0.5 : 1 }}>
+          {exporting ? 'PDF 產生中…' : '📄 儲存 / 分享 PDF'}
         </button>
+        {canPrint && (
+          <button onClick={() => window.print()} disabled={loading} style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
+            列印
+          </button>
+        )}
         <button onClick={downloadHtml} disabled={loading}
           style={{ padding: '7px 18px', borderRadius: 8, border: '0.5px solid #B07040', background: 'white', color: '#B07040', fontSize: 13, fontWeight: 500, cursor: 'pointer', opacity: loading ? 0.5 : 1 }}>
           下載 HTML
@@ -324,7 +348,7 @@ ${top10twd.length > 0 ? `
       </div>
 
       {/* 報表本體 */}
-      <div className="report-content" style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
+      <div ref={reportRef} className="report-content" style={{ maxWidth: 680, margin: '0 auto', padding: '20px 24px 40px', fontSize: 11, color: '#222', lineHeight: 1.6 }}>
 
         {/* 標題 */}
         <div style={{ marginBottom: 20 }}>
