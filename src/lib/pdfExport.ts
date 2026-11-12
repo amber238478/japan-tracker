@@ -19,7 +19,8 @@ export function isStandaloneApp(): boolean {
 function breakPoints(el: HTMLElement): number[] {
   const top = el.getBoundingClientRect().top
   const ys = new Set<number>()
-  el.querySelectorAll('tr, section, h1, h3, .pdf-block').forEach(n => {
+  // .keep-next：同一筆紀錄的明細列，不在中間換頁
+  el.querySelectorAll('tr:not(.keep-next), section, h1, h3, .pdf-block').forEach(n => {
     const r = (n as HTMLElement).getBoundingClientRect()
     ys.add(Math.round(r.bottom - top))
   })
