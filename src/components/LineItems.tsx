@@ -1,7 +1,7 @@
 'use client'
 import { LineItem, Receipt } from '@/lib/types'
 import { getSettings } from '@/lib/settings'
-import { splitOptions, splitLabel, sharesFromItems, DEFAULT_ITEM_SPLIT } from '@/lib/itemSplit'
+import { splitOptionsFor, splitLabel, sharesFromItems, DEFAULT_ITEM_SPLIT } from '@/lib/itemSplit'
 
 const money = (n: number, currency?: string) => {
   const sign = n < 0 ? '-' : ''
@@ -104,7 +104,7 @@ export function LineItemsEditor({ items, onChange, total, currency, fallbackName
               <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>⇌ 分攤</span>
               <select value={String(x.split ?? DEFAULT_ITEM_SPLIT)} onChange={e => update(i, { split: Number(e.target.value) })}
                 style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: 16, color: (x.split ?? DEFAULT_ITEM_SPLIT) === DEFAULT_ITEM_SPLIT ? 'var(--text-secondary)' : 'var(--accent)' }}>
-                {splitOptions(splitUsers[0], splitUsers[1]).map(o => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
+                {splitOptionsFor(x.split, splitUsers[0], splitUsers[1]).map(o => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
               </select>
             </div>
           )}

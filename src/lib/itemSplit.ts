@@ -2,7 +2,7 @@ import { LineItem } from './types'
 
 /**
  * 每個品項的分攤方式：split = 設定裡「第一位使用者（user1）」負擔的比例
- *   0.5 = 平分（預設）、1 = user1 全付、0 = user2 全付、0.6 / 0.4 = 6:4
+ *   0.5 = 平分（預設）、1 = user1 全付、0 = user2 全付、0.4 = user2 6 : user1 4
  */
 export const DEFAULT_ITEM_SPLIT = 0.5
 
@@ -11,13 +11,20 @@ export function splitOptions(user1: string, user2: string) {
     { value: 0.5, label: '平分' },
     { value: 1, label: `${user1} 自己` },
     { value: 0, label: `${user2} 自己` },
-    { value: 0.6, label: `${user1} 6 : ${user2} 4` },
     { value: 0.4, label: `${user2} 6 : ${user1} 4` },
   ]
 }
 
+/** 選單用：目前的值不在選項裡（例如以前選過的 6:4）時，補進去才不會顯示錯 */
+export function splitOptionsFor(current: number | undefined, user1: string, user2: string) {
+  const opts = splitOptions(user1, user2)
+  const v = current ?? DEFAULT_ITEM_SPLIT
+  return opts.some(o => o.value === v) ? opts : [...opts, { value: v, label: splitLabel(v, user1, user2) }]
+}
+
 export function splitLabel(split: number | undefined, user1: string, user2: string) {
   const v = split ?? DEFAULT_ITEM_SPLIT
+  if (v === 0.6) return `${user1} 6 : ${user2} 4` // 舊選項，已存過的品項照樣顯示
   return splitOptions(user1, user2).find(o => o.value === v)?.label ?? `${user1} ${Math.round(v * 100)}%`
 }
 
