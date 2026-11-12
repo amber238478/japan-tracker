@@ -27,7 +27,8 @@ function breakPoints(el: HTMLElement): number[] {
   return [...ys].sort((a, b) => a - b)
 }
 
-export async function exportElementToPdf(el: HTMLElement, filename: string, title: string) {
+/** 產生 PDF 後嘗試分享；回傳 'blocked' 代表手機擋下了（等太久），要請使用者再點一次分享 */
+export async function exportElementToPdf(el: HTMLElement, filename: string, title: string): Promise<{ result: ShareResult; file: File }> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas-pro'),
     import('jspdf'),
@@ -85,24 +86,7 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
     const blob = pdf.output('blob')
     const file = new File([blob], filename, { type: 'application/pdf' })
 
-    // 手機：叫出分享選單（可「儲存到檔案」或傳給別人）
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title })
-        return
-      } catch (e) {
-        if ((e as any)?.name === 'AbortError') return // 使用者自己取消
-      }
-    }
-    // 電腦或不支援分享：直接下載
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
+    return { result: await sharePdf(file, title), file }
   } finally {
     el.style.width = prev.width
     el.style.maxWidth = prev.maxWidth
@@ -110,4 +94,29 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
     el.style.background = prev.background
     el.classList.remove('pdf-rendering')
   }
+}
+
+export type ShareResult = 'shared' | 'cancelled' | 'blocked' | 'downloaded'
+
+/** 手機叫出分享選單（可「儲存到檔案」或傳給別人）；電腦直接下載 */
+export async function sharePdf(file: File, title: string): Promise<ShareResult> {
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title })
+      return 'shared'
+    } catch (e) {
+      const name = (e as any)?.name
+      if (name === 'AbortError') return 'cancelled'      // 使用者自己關掉分享選單
+      if (name === 'NotAllowedError') return 'blocked'   // 產生太久，iPhone 要求再點一次
+    }
+  }
+  const url = URL.createObjectURL(file)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = file.name
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
+  return 'downloaded'
 }

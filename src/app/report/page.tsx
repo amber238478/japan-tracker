@@ -4,7 +4,7 @@ import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings
 import { calcSplit, attribute } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
-import { exportElementToPdf, isStandaloneApp } from '@/lib/pdfExport'
+import { exportElementToPdf, isStandaloneApp, sharePdf } from '@/lib/pdfExport'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -94,6 +94,7 @@ export default function ReportPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [readyFile, setReadyFile] = useState<File | null>(null) // 產生好但分享被擋，等使用者再點一次
   const [canPrint, setCanPrint] = useState(false)
   const reportRef = useRef<HTMLDivElement>(null)
   // 加到主畫面的 App 不支援列印，只在瀏覽器裡顯示「列印」
@@ -126,7 +127,8 @@ export default function ReportPage() {
     if (!reportRef.current) return
     setExporting(true)
     try {
-      await exportElementToPdf(reportRef.current, `${trip.name}-旅行帳單.pdf`, `${trip.name} 旅行帳單`)
+      const { result, file } = await exportElementToPdf(reportRef.current, `${trip.name}-旅行帳單.pdf`, `${trip.name} 旅行帳單`)
+      if (result === 'blocked') setReadyFile(file)
     } catch (e) {
       console.error(e)
       alert('PDF 產生失敗，請再試一次')
@@ -335,6 +337,12 @@ ${top10twd.length > 0 ? `
           style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#F24B2B', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (loading || exporting) ? 0.5 : 1 }}>
           {exporting ? 'PDF 產生中…' : '📄 儲存 / 分享 PDF'}
         </button>
+        {readyFile && (
+          <button onClick={async () => { const r = await sharePdf(readyFile, `${trip.name} 旅行帳單`); if (r !== 'blocked') setReadyFile(null) }}
+            style={{ padding: '7px 18px', borderRadius: 8, border: '1px solid #F24B2B', background: '#FFF0EC', color: '#F24B2B', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            ✅ PDF 已產生，點這裡分享／儲存
+          </button>
+        )}
         {canPrint && (
           <button onClick={() => window.print()} disabled={loading} style={{ padding: '7px 14px', borderRadius: 8, border: '0.5px solid #ddd', background: 'white', fontSize: 13, cursor: 'pointer' }}>
             列印
