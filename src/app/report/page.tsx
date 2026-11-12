@@ -311,8 +311,8 @@ export default function ReportPage() {
 <section style="margin-bottom:18px">
   <h3>旅程總支出</h3>
   <div style="display:flex;gap:32px;font-size:13px">
-    ${grossJpy > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong>${proxyJpy > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 ¥${grossJpy.toLocaleString()} · 代買 −¥${proxyJpy.toLocaleString()}</div>` : ''}${shopJpy > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物 <strong>¥${(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style="color:#C4875A">購物 ¥${shopJpy.toLocaleString()}</span></div>` : ''}</div>` : ''}
-    ${grossTwd > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong>${proxyTwd > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 NT$${grossTwd.toLocaleString()} · 代買 −NT$${proxyTwd.toLocaleString()}</div>` : ''}${shopTwd > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物 <strong>NT$${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style="color:#C4875A">購物 NT$${shopTwd.toLocaleString()}</span></div>` : ''}</div>` : ''}
+    ${grossJpy > 0 ? `<div>日幣${shopJpy > 0 ? '（不含購物）' : ''}<br><strong style="font-size:17px">¥${(jpyTotal - shopJpy).toLocaleString()}</strong>${proxyJpy > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 ¥${grossJpy.toLocaleString()} · 代買 −¥${proxyJpy.toLocaleString()}</div>` : ''}${shopJpy > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px"><span style="color:#C4875A">購物 ¥${shopJpy.toLocaleString()}</span> · 含購物 ¥${jpyTotal.toLocaleString()}</div>` : ''}</div>` : ''}
+    ${grossTwd > 0 ? `<div>台幣${shopTwd > 0 ? '（不含購物）' : ''}<br><strong style="font-size:17px">NT$${(twdTotal - shopTwd).toLocaleString()}</strong>${proxyTwd > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 NT$${grossTwd.toLocaleString()} · 代買 −NT$${proxyTwd.toLocaleString()}</div>` : ''}${shopTwd > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px"><span style="color:#C4875A">購物 NT$${shopTwd.toLocaleString()}</span> · 含購物 NT$${twdTotal.toLocaleString()}</div>` : ''}</div>` : ''}
   </div>
 </section>
 
@@ -444,16 +444,16 @@ ${top10twd.length > 0 ? `
           <div style={{ display: 'flex', gap: 32, fontSize: 13 }}>
             {grossJpy > 0 && (
               <div>
-                日幣<br /><strong style={{ fontSize: 17 }}>¥{jpyTotal.toLocaleString()}</strong>
+                日幣{shopJpy > 0 ? '（不含購物）' : ''}<br /><strong style={{ fontSize: 17 }}>¥{(jpyTotal - shopJpy).toLocaleString()}</strong>
                 {proxyJpy > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 ¥{grossJpy.toLocaleString()} · 代買 −¥{proxyJpy.toLocaleString()}</div>}
-                {shopJpy > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物 <strong>¥{(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物 ¥{shopJpy.toLocaleString()}</span></div>}
+                {shopJpy > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}><span style={{ color: '#C4875A' }}>購物 ¥{shopJpy.toLocaleString()}</span> · 含購物 ¥{jpyTotal.toLocaleString()}</div>}
               </div>
             )}
             {grossTwd > 0 && (
               <div>
-                台幣<br /><strong style={{ fontSize: 17 }}>NT${twdTotal.toLocaleString()}</strong>
+                台幣{shopTwd > 0 ? '（不含購物）' : ''}<br /><strong style={{ fontSize: 17 }}>NT${(twdTotal - shopTwd).toLocaleString()}</strong>
                 {proxyTwd > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 NT${grossTwd.toLocaleString()} · 代買 −NT${proxyTwd.toLocaleString()}</div>}
-                {shopTwd > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物 <strong>NT${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物 NT${shopTwd.toLocaleString()}</span></div>}
+                {shopTwd > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}><span style={{ color: '#C4875A' }}>購物 NT${shopTwd.toLocaleString()}</span> · 含購物 NT${twdTotal.toLocaleString()}</div>}
               </div>
             )}
           </div>
