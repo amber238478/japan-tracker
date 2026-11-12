@@ -352,7 +352,7 @@ ${top10twd.length > 0 ? `
   <h3>完整消費明細</h3>
   <table>
     <colgroup>
-      <col style="width:10%"><col style="width:11%"><col style="width:24%"><col style="width:15%"><col style="width:7%"><col style="width:15%"><col style="width:18%">
+      <col style="width:8%"><col style="width:9%"><col style="width:24%"><col style="width:22%"><col style="width:8%"><col style="width:13%"><col style="width:16%">
     </colgroup>
     <thead>
       <tr style="background:#f5f3f0">
@@ -559,13 +559,13 @@ ${top10twd.length > 0 ? `
           <div className="table-scroll">
           <table className="detail-table" style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse', fontSize: 9.5, tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '25%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '7%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '18%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '24%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '16%' }} />
             </colgroup>
             <thead>
               <tr className="keep-next" style={{ background: '#f5f3f0' }}>
