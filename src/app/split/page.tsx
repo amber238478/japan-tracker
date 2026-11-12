@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 import { getSettings, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, personalTotal } from '@/lib/split'
@@ -33,7 +34,14 @@ export default function SplitPage() {
   return (
     <main>
       <div style={{ padding: '20px 16px 12px' }}>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>分帳結算</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>分帳結算</div>
+          <Link href="/split/report">
+            <button style={{ fontSize: 12, padding: '6px 12px', borderRadius: 10, border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
+              PDF
+            </button>
+          </Link>
+        </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>結算金額只計算有標記分帳的消費，各自真實花費則是個人支出＋分帳後的份額</div>
       </div>
 
