@@ -7,7 +7,7 @@ import { buildTripReport } from '@/lib/tripReport'
 import { attribute, personalTotal } from '@/lib/split'
 import { Receipt, Currency } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
-import { isShopping, catLabel } from '@/lib/categories'
+import { isShopping, nestSubcategories } from '@/lib/categories'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -36,7 +36,7 @@ function buildCombinedStats(receipts: Receipt[], currency: Currency, user1: stri
   })).filter(p => p.amt > 0).sort((a, b) => b.amt - a.amt)
   const top10 = [...filtered].filter(r => r.category !== '代買').sort((a, b) => b.amount - a.amount).slice(0, 10)
     .map(r => ({ ...r, displayAmt: r.amount }))
-  return { total, grossTotal, byCat, byPayment, top10 }
+  return { total, grossTotal, byCat: nestSubcategories(byCat), byPayment, top10 }
 }
 
 // 個人統計：以 attribute 計算，只顯示該人真實應負擔的金額
@@ -63,7 +63,7 @@ function buildPersonStats(receipts: Receipt[], currency: Currency, user: string,
     .filter(r => r.displayAmt > 0)
     .sort((a, b) => b.displayAmt - a.displayAmt)
     .slice(0, 10)
-  return { total, grossTotal, byCat, byPayment, byPaymentTotal: myPaidTotal, top10 }
+  return { total, grossTotal, byCat: nestSubcategories(byCat), byPayment, byPaymentTotal: myPaidTotal, top10 }
 }
 
 export default function StatsPage() {
@@ -168,13 +168,13 @@ export default function StatsPage() {
           return (
             <div className="card" style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-                總支出（不含購物、購物-藥品）{tab === 'all' ? '· 兩人合計' : ''}
+                總支出（不含購物）{tab === 'all' ? '· 兩人合計' : ''}
               </div>
               <div className="mono" style={{ fontSize: 28, fontWeight: 500 }}>¥{jpy.toLocaleString()}</div>
               {(twd !== 0 || shopTWD !== 0) && <div className="mono" style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${twd.toLocaleString()}</div>}
               {(shopJPY !== 0 || shopTWD !== 0) && (
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                  已扣除購物（含藥品）¥{shopJPY.toLocaleString()}{shopTWD !== 0 ? ` · NT$${shopTWD.toLocaleString()}` : ''}
+                  已扣除購物（含子分類藥品）¥{shopJPY.toLocaleString()}{shopTWD !== 0 ? ` · NT$${shopTWD.toLocaleString()}` : ''}
                 </div>
               )}
             </div>
@@ -203,7 +203,7 @@ export default function StatsPage() {
                   <div key={c.name} style={{ marginBottom: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
                       <span style={{ color: c.isDeduction ? 'var(--text-hint)' : 'var(--text-secondary)' }}>
-                        {c.isDeduction ? '↩ ' : ''}{catLabel(c.name)}
+                        {c.isDeduction ? '↩ ' : ''}{c.name}
                       </span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontWeight: 500, color: c.isDeduction ? 'var(--text-hint)' : undefined }}>
@@ -219,6 +219,12 @@ export default function StatsPage() {
                         background: c.isDeduction ? 'repeating-linear-gradient(90deg, var(--text-hint) 0px, var(--text-hint) 4px, transparent 4px, transparent 8px)' : c.color,
                         width: `${stats.grossTotal > 0 ? (c.amt / stats.grossTotal) * 100 : 0}%`, transition: 'width 0.4s' }} />
                     </div>
+                    {c.subs?.map(sub => (
+                      <div key={sub.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginTop: 4, paddingLeft: 10 }}>
+                        <span>└ {sub.name}</span>
+                        <span>{symbol}{sub.amt.toLocaleString()}</span>
+                      </div>
+                    ))}
                     {tab === 'all' && !c.isDeduction && 'user1Amt' in c && (c.user1Amt > 0 || c.user2Amt > 0) && (
                       <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
                         {c.user1Amt > 0 && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{settings.user1} {symbol}{c.user1Amt.toLocaleString()}</span>}
