@@ -241,16 +241,33 @@ export default function ReportPage() {
         <td style="padding:4px 0;text-align:right;font-weight:500;white-space:nowrap">${symbol}${r.amount.toLocaleString()}</td>
       </tr>`).join('')
 
-    const detailRows = sorted.map((r, i) => `
-      <tr style="background:${i % 2 === 0 ? 'white' : '#fafaf8'}">
+    const detailRows = sorted.map((r, i) => {
+      const bg = i % 2 === 0 ? 'white' : '#fafaf8'
+      const sym = r.currency === 'TWD' ? 'NT$' : '¥'
+      const items = r.lineItems ?? []
+      const diff = r.amount - items.reduce((a, x) => a + (Number(x.price) || 0), 0)
+      const subRows = items.map(x => `
+      <tr style="background:${bg}">
+        <td></td><td></td>
+        <td colspan="4" style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td>
+        <td style="padding:1px 6px;text-align:right;color:${x.price < 0 ? '#C04040' : '#555'}">${x.price < 0 ? '−' : ''}${sym}${Math.abs(x.price).toLocaleString()}</td>
+      </tr>`).join('') + (items.length > 0 && diff !== 0 ? `
+      <tr style="background:${bg}">
+        <td></td><td></td>
+        <td colspan="4" style="padding:1px 6px 3px 14px;color:#999">└ 其他（稅、尾數等差額）</td>
+        <td style="padding:1px 6px 3px;text-align:right;color:#999">${diff < 0 ? '−' : ''}${sym}${Math.abs(diff).toLocaleString()}</td>
+      </tr>` : '')
+      return `
+      <tr style="background:${bg}">
         <td>${r.date.slice(5)}</td>
         <td>${catLabel(r.category)}</td>
-        <td style="white-space:normal;word-break:break-all">${r.items}</td>
+        <td style="white-space:normal;word-break:break-all${items.length ? ';font-weight:500' : ''}">${items.length ? `共 ${items.length} 項` : r.items}</td>
         <td style="white-space:normal;word-break:break-all">${r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : (r.storeName || '')}</td>
         <td>${r.paidBy}</td>
         <td>${r.paymentMethod}</td>
-        <td style="text-align:right;font-weight:500">${r.currency === 'TWD' ? 'NT$' : '¥'}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}${r.category === '代買' ? ' <span style="font-size:8px;color:#B38700">↩</span>' : ''}</td>
-      </tr>`).join('')
+        <td style="text-align:right;font-weight:500">${sym}${r.amount.toLocaleString()}${r.splitWith ? ' <span style="font-size:8px;color:#B07040">AA</span>' : ''}${r.category === '代買' ? ' <span style="font-size:8px;color:#B38700">↩</span>' : ''}</td>
+      </tr>` + subRows
+    }).join('')
 
     const payRowsHtml = payRows.map(p => `
       <tr>
@@ -556,11 +573,17 @@ ${top10twd.length > 0 ? `
               </tr>
             </thead>
             <tbody>
-              {sorted.map((r, i) => (
-                <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#fafaf8' }}>
+              {sorted.map((r, i) => {
+                const bg = i % 2 === 0 ? 'white' : '#fafaf8'
+                const sym = r.currency === 'TWD' ? 'NT$' : '¥'
+                const items = r.lineItems ?? []
+                const diff = r.amount - items.reduce((a, x) => a + (Number(x.price) || 0), 0)
+                return (
+                <Fragment key={r.notionId ?? i}>
+                <tr className={items.length ? 'keep-next' : undefined} style={{ background: bg }}>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#666' }}>{r.date.slice(5)}</td>
                   <td style={{ padding: '4px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{catLabel(r.category)}</td>
-                  <td style={{ padding: '4px 6px', wordBreak: 'break-all' }}>{r.items}</td>
+                  <td style={{ padding: '4px 6px', wordBreak: 'break-all', fontWeight: items.length ? 500 : undefined }}>{items.length ? `共 ${items.length} 項` : r.items}</td>
                   <td style={{ padding: '4px 6px', wordBreak: 'break-all', color: '#666' }}>
                     {r.category === '代買' && r.proxyFor ? `→ ${r.proxyFor}` : r.storeName}
                   </td>
@@ -571,7 +594,30 @@ ${top10twd.length > 0 ? `
                     {r.splitWith && <span style={{ fontSize: 8.5, color: '#B07040', marginLeft: 3 }}>AA</span>}
                   </td>
                 </tr>
-              ))}
+                {/* 每個品項的個別金額 */}
+                {items.map((x, j) => (
+                  <tr key={j} className={j < items.length - 1 || diff !== 0 ? 'keep-next' : undefined} style={{ background: bg }}>
+                    <td></td>
+                    <td></td>
+                    <td colSpan={4} style={{ padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
+                      └ {x.name}{(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}
+                    </td>
+                    <td style={{ padding: '1px 6px', textAlign: 'right', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
+                      {x.price < 0 ? '−' : ''}{sym}{Math.abs(x.price).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                {items.length > 0 && diff !== 0 && (
+                  <tr style={{ background: bg }}>
+                    <td></td>
+                    <td></td>
+                    <td colSpan={4} style={{ padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
+                    <td style={{ padding: '1px 6px 3px', textAlign: 'right', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
+                  </tr>
+                )}
+                </Fragment>
+                )
+              })}
             </tbody>
           </table>
           </div>
