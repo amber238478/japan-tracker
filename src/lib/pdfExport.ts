@@ -69,6 +69,14 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
 
   try {
     const breaks = breakPoints(el)
+    // 有表頭的表格：記下位置，表格跨頁時在新的一頁重複表頭
+    const elTop = el.getBoundingClientRect().top
+    const tables = Array.from(el.querySelectorAll('table')).map(t => {
+      const head = t.querySelector('thead')
+      if (!head) return null
+      const tr = t.getBoundingClientRect(), hr = head.getBoundingClientRect()
+      return { top: tr.top - elTop, bottom: tr.bottom - elTop, headTop: hr.top - elTop, headBottom: hr.bottom - elTop }
+    }).filter((x): x is NonNullable<typeof x> => x !== null)
     const scale = 2
     const canvas = await html2canvas(el, {
       scale,
@@ -85,31 +93,38 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
     const pageHpx = Math.floor(contentH * pxPerMm)    // 一頁可放的畫布高度
 
     // 先決定每一頁要切哪一段，最後再一起畫（才知道總頁數）
-    const slices: { y: number; h: number }[] = []
+    type Head = { y: number; h: number }
+    const slices: { y: number; h: number; head?: Head }[] = []
     let y = 0
     while (y < canvas.height - 1) {
+      // 這一頁是不是從某個表格的中間開始？是的話上方要再放一次表頭
+      const t = tables.find(t => y > t.headBottom * scale + 1 && y < t.bottom * scale - 1)
+      const head: Head | undefined = t ? { y: Math.round(t.headTop * scale), h: Math.round((t.headBottom - t.headTop) * scale) } : undefined
+      const room = pageHpx - (head?.h ?? 0)
       // 在一頁高度內，找最後一個可換頁位置
-      let end = Math.min(y + pageHpx, canvas.height)
+      let end = Math.min(y + room, canvas.height)
       if (end < canvas.height) {
-        const candidates = breaks.map(b => b * scale).filter(b => b > y + pageHpx * 0.3 && b <= y + pageHpx)
+        const candidates = breaks.map(b => b * scale).filter(b => b > y + room * 0.3 && b <= y + room)
         if (candidates.length) end = candidates[candidates.length - 1]
       }
-      slices.push({ y, h: Math.max(1, Math.round(end - y)) })
+      slices.push({ y, h: Math.max(1, Math.round(end - y)), head })
       y = end
     }
 
     slices.forEach((sl, i) => {
+      const headH = sl.head?.h ?? 0
       const slice = document.createElement('canvas')
       slice.width = canvas.width
-      slice.height = sl.h
+      slice.height = sl.h + headH
       const ctx = slice.getContext('2d')!
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, slice.width, slice.height)
-      ctx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h)
+      if (sl.head) ctx.drawImage(canvas, 0, sl.head.y, canvas.width, headH, 0, 0, canvas.width, headH)
+      ctx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, headH, canvas.width, sl.h)
 
       if (i > 0) pdf.addPage()
       pdf.addImage(headerImage(title, i + 1, slices.length, canvas.width), 'PNG', MARGIN, MARGIN, contentW, HEADER_H)
-      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', MARGIN, MARGIN + HEADER_H + 2, contentW, sl.h / pxPerMm)
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', MARGIN, MARGIN + HEADER_H + 2, contentW, slice.height / pxPerMm)
     })
 
     const blob = pdf.output('blob')
