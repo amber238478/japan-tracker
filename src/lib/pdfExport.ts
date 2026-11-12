@@ -8,7 +8,31 @@
 const A4_W = 210 // mm
 const A4_H = 297
 const MARGIN = 10
+const HEADER_H = 9 // 每頁最上方標題列的高度（mm）
 const RENDER_WIDTH = 720 // 以固定寬度排版後再截圖，手機和電腦產生的 PDF 一樣
+
+/** 畫每頁上方的標題列（用 canvas 畫字，中文才不會變亂碼） */
+function headerImage(title: string, pageNo: number, pages: number, widthPx: number): string {
+  const h = Math.round(widthPx * HEADER_H / (A4_W - MARGIN * 2))
+  const c = document.createElement('canvas')
+  c.width = widthPx
+  c.height = h
+  const ctx = c.getContext('2d')!
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, c.width, c.height)
+  const font = "-apple-system, 'PingFang TC', 'Noto Sans TC', 'Helvetica Neue', Arial, sans-serif"
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#222222'
+  ctx.font = `600 ${Math.round(h * 0.42)}px ${font}`
+  ctx.fillText(title, 0, h * 0.45)
+  ctx.fillStyle = '#999999'
+  ctx.font = `${Math.round(h * 0.34)}px ${font}`
+  const pageText = `第 ${pageNo} / ${pages} 頁`
+  ctx.fillText(pageText, c.width - ctx.measureText(pageText).width, h * 0.45)
+  ctx.fillStyle = '#dddddd'
+  ctx.fillRect(0, h - Math.max(1, Math.round(h * 0.03)), c.width, Math.max(1, Math.round(h * 0.03)))
+  return c.toDataURL('image/png')
+}
 
 export function isStandaloneApp(): boolean {
   if (typeof window === 'undefined') return false
@@ -56,12 +80,13 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
 
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
     const contentW = A4_W - MARGIN * 2
-    const contentH = A4_H - MARGIN * 2
+    const contentH = A4_H - MARGIN * 2 - HEADER_H - 2 // 留出標題列
     const pxPerMm = canvas.width / contentW          // 畫布像素 / mm
     const pageHpx = Math.floor(contentH * pxPerMm)    // 一頁可放的畫布高度
 
+    // 先決定每一頁要切哪一段，最後再一起畫（才知道總頁數）
+    const slices: { y: number; h: number }[] = []
     let y = 0
-    let first = true
     while (y < canvas.height - 1) {
       // 在一頁高度內，找最後一個可換頁位置
       let end = Math.min(y + pageHpx, canvas.height)
@@ -69,20 +94,23 @@ export async function exportElementToPdf(el: HTMLElement, filename: string, titl
         const candidates = breaks.map(b => b * scale).filter(b => b > y + pageHpx * 0.3 && b <= y + pageHpx)
         if (candidates.length) end = candidates[candidates.length - 1]
       }
-      const sliceH = Math.max(1, Math.round(end - y))
+      slices.push({ y, h: Math.max(1, Math.round(end - y)) })
+      y = end
+    }
+
+    slices.forEach((sl, i) => {
       const slice = document.createElement('canvas')
       slice.width = canvas.width
-      slice.height = sliceH
+      slice.height = sl.h
       const ctx = slice.getContext('2d')!
       ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, slice.width, slice.height)
-      ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH)
+      ctx.drawImage(canvas, 0, sl.y, canvas.width, sl.h, 0, 0, canvas.width, sl.h)
 
-      if (!first) pdf.addPage()
-      first = false
-      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', MARGIN, MARGIN, contentW, sliceH / pxPerMm)
-      y = end
-    }
+      if (i > 0) pdf.addPage()
+      pdf.addImage(headerImage(title, i + 1, slices.length, canvas.width), 'PNG', MARGIN, MARGIN, contentW, HEADER_H)
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', MARGIN, MARGIN + HEADER_H + 2, contentW, sl.h / pxPerMm)
+    })
 
     const blob = pdf.output('blob')
     const file = new File([blob], filename, { type: 'application/pdf' })
