@@ -2,10 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getSettings } from '@/lib/settings'
-import { Category, LineItem, PaymentMethod, Receipt } from '@/lib/types'
+import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsEditor } from '@/components/LineItems'
-import { ratioFromItems } from '@/lib/itemSplit'
 import SplitShare from '@/components/SplitShare'
 import { catLabel } from '@/lib/categories'
 
@@ -33,11 +32,6 @@ export default function EditPage() {
     }).finally(() => setLoading(false))
   }, [id])
 
-  // 有分帳且有明細時，依每項的分攤方式算出分帳比例
-  const withItemRatio = (f: any) => (f.splitWith != null && f.lineItems?.length
-    ? { ...f, splitRatio: ratioFromItems(f.lineItems, Number(f.amount) || 0, f.paidBy, s.user1) }
-    : f)
-  const setItems = (v: LineItem[]) => setForm((f: any) => withItemRatio({ ...f, lineItems: v }))
   const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }))
 
   const save = async () => {
@@ -82,7 +76,7 @@ export default function EditPage() {
           <input value={form.storeName ?? ''} onChange={e => set('storeName', e.target.value)} placeholder="店名（選填）" />
         </div>
 
-        <LineItemsEditor items={form.lineItems ?? []} onChange={setItems} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} splitUsers={form.splitWith != null ? [s.user1, s.user2] : null} />
+        <LineItemsEditor items={form.lineItems ?? []} onChange={v => set('lineItems', v)} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} />
 
         <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
@@ -130,7 +124,7 @@ export default function EditPage() {
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>付款人</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {[s.user1, s.user2].map(u => (
-                <button key={u} onClick={() => setForm((f: any) => withItemRatio({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
+                <button key={u} onClick={() => setForm((f: any) => ({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
                   style={{ flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                     borderColor: form.paidBy === u ? 'var(--accent)' : 'var(--border)',
                     background: form.paidBy === u ? 'var(--accent-light)' : 'transparent',
@@ -147,7 +141,7 @@ export default function EditPage() {
                 color: form.splitWith === null ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
               不分帳
             </button>
-            <button onClick={() => setForm((f: any) => withItemRatio({ ...f, splitWith: f.paidBy === s.user1 ? s.user2 : s.user1 }))}
+            <button onClick={() => set('splitWith', form.paidBy === s.user1 ? s.user2 : s.user1)}
               style={{ flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                 borderColor: form.splitWith !== null ? 'var(--accent)' : 'var(--border)',
                 background: form.splitWith !== null ? 'var(--accent-light)' : 'transparent',
