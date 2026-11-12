@@ -85,11 +85,16 @@ export async function pullSettings(): Promise<boolean> {
     if (hasLocalSettings()) pushSettings(local)
     return false
   }
-  const names = remote.trips.map((t: Trip) => t.name)
+  // 旅行清單取聯集：本機有、Notion 沒有的旅行不會被丟掉，會補回 Notion
+  const remoteNames = remote.trips.map((t: Trip) => t.name)
+  const extra = hasLocalSettings() ? local.trips.filter(t => !remoteNames.includes(t.name)) : []
+  const trips: Trip[] = [...remote.trips, ...extra]
+  const names = trips.map(t => t.name)
   const activeTrip = hasLocalSettings() && names.includes(local.activeTrip)
     ? local.activeTrip
     : (names.includes(remote.activeTrip) ? remote.activeTrip : names[names.length - 1])
-  const merged: AppSettings = { trips: remote.trips, user1: remote.user1 || local.user1, user2: remote.user2 || local.user2, activeTrip }
+  const merged: AppSettings = { trips, user1: remote.user1 || local.user1, user2: remote.user2 || local.user2, activeTrip }
+  if (extra.length) pushSettings(merged)
   const changed = JSON.stringify(merged) !== JSON.stringify(local) || !hasLocalSettings()
   if (changed) saveSettings(merged, { sync: false })
   return changed
