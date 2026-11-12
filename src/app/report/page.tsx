@@ -249,13 +249,13 @@ export default function ReportPage() {
       const subRows = items.map(x => `
       <tr class="sub" style="background:${bg}">
         <td></td><td></td>
-        <td style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td><td></td><td></td><td></td>
-        <td style="padding:1px 6px;text-align:right;color:${x.price < 0 ? '#C04040' : '#555'}">${x.price < 0 ? '−' : ''}${sym}${Math.abs(x.price).toLocaleString()}</td>
+        <td style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td>
+        <td style="padding:1px 6px;color:${x.price < 0 ? '#C04040' : '#555'}">${x.price < 0 ? '−' : ''}${sym}${Math.abs(x.price).toLocaleString()}</td><td></td><td></td><td></td>
       </tr>`).join('') + (items.length > 0 && diff !== 0 ? `
       <tr class="sub" style="background:${bg}">
         <td></td><td></td>
-        <td style="padding:1px 6px 3px 14px;color:#999;white-space:normal">└ 其他（稅、尾數等差額）</td><td></td><td></td><td></td>
-        <td style="padding:1px 6px 3px;text-align:right;color:#999">${diff < 0 ? '−' : ''}${sym}${Math.abs(diff).toLocaleString()}</td>
+        <td style="padding:1px 6px 3px 14px;color:#999;white-space:normal">└ 其他（稅、尾數等差額）</td>
+        <td style="padding:1px 6px 3px;color:#999">${diff < 0 ? '−' : ''}${sym}${Math.abs(diff).toLocaleString()}</td><td></td><td></td><td></td>
       </tr>` : '')
       return `
       <tr style="background:${bg}">
@@ -604,10 +604,10 @@ ${top10twd.length > 0 ? `
                     <td style={{ fontSize: 9, padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
                       └ {x.name}{(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}
                     </td>
-                    <td></td><td></td><td></td>
-                    <td style={{ fontSize: 9, padding: '1px 6px', textAlign: 'right', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
+                    <td style={{ fontSize: 9, padding: '1px 6px', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
                       {x.price < 0 ? '−' : ''}{sym}{Math.abs(x.price).toLocaleString()}
                     </td>
+                    <td></td><td></td><td></td>
                   </tr>
                 ))}
                 {items.length > 0 && diff !== 0 && (
@@ -615,8 +615,8 @@ ${top10twd.length > 0 ? `
                     <td></td>
                     <td></td>
                     <td style={{ fontSize: 9, padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
+                    <td style={{ fontSize: 9, padding: '1px 6px 3px', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
                     <td></td><td></td><td></td>
-                    <td style={{ fontSize: 9, padding: '1px 6px 3px', textAlign: 'right', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
                   </tr>
                 )}
                 </Fragment>
