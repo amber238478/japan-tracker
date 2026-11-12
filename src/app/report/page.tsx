@@ -247,12 +247,12 @@ export default function ReportPage() {
       const items = r.lineItems ?? []
       const diff = r.amount - items.reduce((a, x) => a + (Number(x.price) || 0), 0)
       const subRows = items.map(x => `
-      <tr style="background:${bg}">
+      <tr class="sub" style="background:${bg}">
         <td></td><td></td>
         <td colspan="4" style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td>
         <td style="padding:1px 6px;text-align:right;color:${x.price < 0 ? '#C04040' : '#555'}">${x.price < 0 ? '−' : ''}${sym}${Math.abs(x.price).toLocaleString()}</td>
       </tr>`).join('') + (items.length > 0 && diff !== 0 ? `
-      <tr style="background:${bg}">
+      <tr class="sub" style="background:${bg}">
         <td></td><td></td>
         <td colspan="4" style="padding:1px 6px 3px 14px;color:#999">└ 其他（稅、尾數等差額）</td>
         <td style="padding:1px 6px 3px;text-align:right;color:#999">${diff < 0 ? '−' : ''}${sym}${Math.abs(diff).toLocaleString()}</td>
@@ -288,6 +288,8 @@ export default function ReportPage() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${trip.name} 旅行帳單</title>
 <style>
+  html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  .sub td { font-size: 9px !important; }
   body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.6; max-width: 680px; margin: 0 auto; padding: 24px; }
   h1 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
   h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #666; border-bottom: 0.5px solid #ddd; padding-bottom: 4px; margin-bottom: 10px; }
@@ -599,10 +601,10 @@ ${top10twd.length > 0 ? `
                   <tr key={j} className={j < items.length - 1 || diff !== 0 ? 'keep-next' : undefined} style={{ background: bg }}>
                     <td></td>
                     <td></td>
-                    <td colSpan={4} style={{ padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
+                    <td colSpan={4} style={{ fontSize: 9, padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
                       └ {x.name}{(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}
                     </td>
-                    <td style={{ padding: '1px 6px', textAlign: 'right', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
+                    <td style={{ fontSize: 9, padding: '1px 6px', textAlign: 'right', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
                       {x.price < 0 ? '−' : ''}{sym}{Math.abs(x.price).toLocaleString()}
                     </td>
                   </tr>
@@ -611,8 +613,8 @@ ${top10twd.length > 0 ? `
                   <tr style={{ background: bg }}>
                     <td></td>
                     <td></td>
-                    <td colSpan={4} style={{ padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
-                    <td style={{ padding: '1px 6px 3px', textAlign: 'right', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
+                    <td colSpan={4} style={{ fontSize: 9, padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
+                    <td style={{ fontSize: 9, padding: '1px 6px 3px', textAlign: 'right', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
                   </tr>
                 )}
                 </Fragment>
