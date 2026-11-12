@@ -37,11 +37,14 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
                   {x.name}{(x.qty ?? 1) > 1 && <span style={{ color: 'var(--text-muted)' }}> ×{x.qty}</span>}
                 </div>
                 {x.nameJa && <div style={{ fontSize: 10, color: 'var(--text-hint)', wordBreak: 'break-word' }}>{x.nameJa}</div>}
-                {receipt.splitWith && (
-                  <div style={{ fontSize: 10, color: 'var(--accent)', marginTop: 1 }}>⇌ {splitLabel(x.split, users[0], users[1])}</div>
-                )}
               </div>
-              <div className="mono" style={{ flexShrink: 0, color: x.price < 0 ? 'var(--accent)' : 'var(--text-primary)' }}>{money(x.price, cur)}</div>
+              {/* 分攤方式放在金額左邊 */}
+              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                {receipt.splitWith && (
+                  <span style={{ fontSize: 10, color: 'var(--accent)', whiteSpace: 'nowrap' }}>⇌ {splitLabel(x.split, users[0], users[1])}</span>
+                )}
+                <span className="mono" style={{ color: x.price < 0 ? 'var(--accent)' : 'var(--text-primary)' }}>{money(x.price, cur)}</span>
+              </div>
             </div>
           ))}
           {diff !== 0 && (
