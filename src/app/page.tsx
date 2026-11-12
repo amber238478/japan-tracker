@@ -95,7 +95,7 @@ export default function Home() {
       document.addEventListener('click', onDocClick)
       return () => document.removeEventListener('click', onDocClick)
     }, [])
-  // 右上角累計：不含「購物」「購物-藥品」類別
+  // 右上角累計：不含「購物」（含子分類藥品）
   const nonShopping = tripReceipts.filter(r => !isShopping(r.category))
   const tripJPY = personalTotal(nonShopping, 'JPY', settings.user1, settings.user2)
   const tripTWD = personalTotal(nonShopping, 'TWD', settings.user1, settings.user2)
@@ -172,7 +172,7 @@ export default function Home() {
             {tripDayTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripDayTWD.toLocaleString()}</div>}
           </div>
           <div className="card">
-            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>累計（{settings.user1}）· 不含購物/藥品</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>累計（{settings.user1}）· 不含購物</div>
             <div className="mono" style={{ fontSize: 24, fontWeight: 500 }}>¥{tripJPY.toLocaleString()}</div>
             {tripTWD > 0 && <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 2 }}>NT${tripTWD.toLocaleString()}</div>}
           </div>

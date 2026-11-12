@@ -1,11 +1,11 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { getSettings, getActiveTrip, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, attribute } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
 import { exportElementToPdf, isStandaloneApp, sharePdf } from '@/lib/pdfExport'
-import { isShopping, catLabel, SHOPPING_CATEGORIES } from '@/lib/categories'
+import { isShopping, catLabel, nestSubcategories } from '@/lib/categories'
 
 const CATEGORIES = ['餐飲', '交通', '購物', '門票', '住宿', '藥品', '代買', '其他']
 const CAT_COLORS: Record<string, string> = {
@@ -43,12 +43,12 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 8, fontSize: 11, color: '#333' }}>
         {jpyTotal > 0 && (
           <span>日幣 <strong>¥{(jpyTotal - jpyShop).toLocaleString()}</strong>
-            {jpyShop > 0 && <span style={{ color: '#888' }}>（不含購物、藥品）· 購物（含藥品）<strong style={{ color: '#C4875A' }}>¥{jpyShop.toLocaleString()}</strong> · 含購物 ¥{jpyTotal.toLocaleString()}</span>}
+            {jpyShop > 0 && <span style={{ color: '#888' }}>（不含購物）· 購物<strong style={{ color: '#C4875A' }}>¥{jpyShop.toLocaleString()}</strong> · 含購物 ¥{jpyTotal.toLocaleString()}</span>}
           </span>
         )}
         {twdTotal > 0 && (
           <span>台幣 <strong>NT${(twdTotal - twdShop).toLocaleString()}</strong>
-            {twdShop > 0 && <span style={{ color: '#888' }}>（不含購物、藥品）· 購物（含藥品）<strong style={{ color: '#C4875A' }}>NT${twdShop.toLocaleString()}</strong></span>}
+            {twdShop > 0 && <span style={{ color: '#888' }}>（不含購物）· 購物<strong style={{ color: '#C4875A' }}>NT${twdShop.toLocaleString()}</strong></span>}
           </span>
         )}
       </div>
@@ -58,12 +58,11 @@ function PersonSection({ name, recs, otherName }: { name: string; recs: Receipt[
   )
 }
 
-type CatRow = { name: string; amt: number; pct: number; color: string; isDeduction?: boolean }
+type CatRow = { name: string; amt: number; pct: number; color: string; isDeduction?: boolean; subs?: CatRow[] }
 
-// 購物（含購物-藥品）另外列：其他分類的百分比以「不含購物」的總額計算
+// 購物（含子分類藥品）另外列：其他分類的百分比以「不含購物」的總額計算
 function splitShopping(rows: CatRow[]): { main: CatRow[]; shops: CatRow[] } {
-  // 順序固定：購物 → 購物-藥品
-  const shops = rows.filter(r => isShopping(r.name)).sort((a, b) => SHOPPING_CATEGORIES.indexOf(a.name) - SHOPPING_CATEGORIES.indexOf(b.name))
+  const shops = nestSubcategories(rows.filter(r => isShopping(r.name)))
   const rest = rows.filter(r => !isShopping(r.name))
   const base = rest.filter(r => !r.isDeduction).reduce((a, r) => a + r.amt, 0)
   const main = rest.map(r => ({ ...r, pct: base > 0 ? Math.round(r.amt / base * 100) : 0 }))
@@ -95,17 +94,24 @@ function CatTable({ rows: allRows, symbol, style: s }: { rows: CatRow[]; symbol:
             <td style={{ padding: '3px 0 3px 6px', color: '#999', whiteSpace: 'nowrap' }}>{r.pct}%</td>
           </tr>
         ))}
-        {shops.map((shop, i) => {
-          const line = i === 0 ? '0.5px dashed #ddd' : 'none'
-          return (
-            <tr key={shop.name}>
-              <td style={{ padding: '6px 0 3px', color: '#C4875A', whiteSpace: 'nowrap', borderTop: line, fontWeight: 600 }}>{catLabel(shop.name)}</td>
-              <td style={{ padding: '6px 8px 3px 14px', color: '#aaa', fontSize: 9, borderTop: line }}>{i === 0 ? '另計，不含在上方總額' : ''}</td>
-              <td style={{ padding: '6px 0 3px', textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap', color: '#C4875A', borderTop: line }}>{symbol}{shop.amt.toLocaleString()}</td>
-              <td style={{ borderTop: line }}></td>
+        {shops.map(shop => (
+          <Fragment key={shop.name}>
+            <tr>
+              <td style={{ padding: '6px 0 3px', color: '#C4875A', whiteSpace: 'nowrap', borderTop: '0.5px dashed #ddd', fontWeight: 600 }}>{shop.name}</td>
+              <td style={{ padding: '6px 8px 3px', color: '#aaa', fontSize: 9, borderTop: '0.5px dashed #ddd' }}>另計，不含在上方總額{shop.subs?.length ? '（含子分類）' : ''}</td>
+              <td style={{ padding: '6px 0 3px', textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap', color: '#C4875A', borderTop: '0.5px dashed #ddd' }}>{symbol}{shop.amt.toLocaleString()}</td>
+              <td style={{ borderTop: '0.5px dashed #ddd' }}></td>
             </tr>
-          )
-        })}
+            {shop.subs?.map(sub => (
+              <tr key={sub.name}>
+                <td style={{ padding: '1px 0 3px 10px', color: '#C4875A', whiteSpace: 'nowrap' }}>└ {sub.name}</td>
+                <td></td>
+                <td style={{ padding: '1px 0 3px', textAlign: 'right', whiteSpace: 'nowrap', color: '#C4875A' }}>{symbol}{sub.amt.toLocaleString()}</td>
+                <td></td>
+              </tr>
+            ))}
+          </Fragment>
+        ))}
       </tbody>
     </table>
   )
@@ -213,13 +219,19 @@ export default function ReportPage() {
         </td>
         <td style="padding:3px 0;text-align:right;font-weight:500;white-space:nowrap;color:${r.isDeduction ? '#aaa' : 'inherit'}">${r.isDeduction ? '−' : ''}${symbol}${r.amt.toLocaleString()}</td>
         <td style="padding:3px 0 3px 6px;color:#999;white-space:nowrap">${r.pct}%</td>
-      </tr>`).join('') + shops.map((shop, i) => `
+      </tr>`).join('') + shops.map(shop => `
       <tr>
-        <td style="padding:6px 0 3px;color:#C4875A;font-weight:600;white-space:nowrap;${i === 0 ? 'border-top:0.5px dashed #ddd' : ''}">${catLabel(shop.name)}</td>
-        <td style="padding:6px 8px 3px 14px;color:#aaa;font-size:9px;${i === 0 ? 'border-top:0.5px dashed #ddd' : ''}">${i === 0 ? '另計，不含在上方總額' : ''}</td>
-        <td style="padding:6px 0 3px;text-align:right;font-weight:600;color:#C4875A;${i === 0 ? 'border-top:0.5px dashed #ddd' : ''}">${symbol}${shop.amt.toLocaleString()}</td>
-        <td style="${i === 0 ? 'border-top:0.5px dashed #ddd' : ''}"></td>
-      </tr>`).join('') }
+        <td style="padding:6px 0 3px;color:#C4875A;font-weight:600;white-space:nowrap;border-top:0.5px dashed #ddd">${shop.name}</td>
+        <td style="padding:6px 8px 3px;color:#aaa;font-size:9px;border-top:0.5px dashed #ddd">另計，不含在上方總額${shop.subs?.length ? '（含子分類）' : ''}</td>
+        <td style="padding:6px 0 3px;text-align:right;font-weight:600;color:#C4875A;border-top:0.5px dashed #ddd">${symbol}${shop.amt.toLocaleString()}</td>
+        <td style="border-top:0.5px dashed #ddd"></td>
+      </tr>` + (shop.subs ?? []).map(sub => `
+      <tr>
+        <td style="padding:1px 0 3px 10px;color:#C4875A;white-space:nowrap">└ ${sub.name}</td>
+        <td></td>
+        <td style="padding:1px 0 3px;text-align:right;color:#C4875A">${symbol}${sub.amt.toLocaleString()}</td>
+        <td></td>
+      </tr>`).join('')).join('') }
 
     const top10Html = (items: Receipt[], symbol: string) => items.map((r, i) => `
       <tr style="border-bottom:0.5px solid #f0f0f0">
@@ -280,8 +292,8 @@ export default function ReportPage() {
 <section style="margin-bottom:18px">
   <h3>旅程總支出</h3>
   <div style="display:flex;gap:32px;font-size:13px">
-    ${grossJpy > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong>${proxyJpy > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 ¥${grossJpy.toLocaleString()} · 代買 −¥${proxyJpy.toLocaleString()}</div>` : ''}${shopJpy > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物、藥品 <strong>¥${(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style="color:#C4875A">購物（含藥品）¥${shopJpy.toLocaleString()}</span></div>` : ''}</div>` : ''}
-    ${grossTwd > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong>${proxyTwd > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 NT$${grossTwd.toLocaleString()} · 代買 −NT$${proxyTwd.toLocaleString()}</div>` : ''}${shopTwd > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物、藥品 <strong>NT$${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style="color:#C4875A">購物（含藥品）NT$${shopTwd.toLocaleString()}</span></div>` : ''}</div>` : ''}
+    ${grossJpy > 0 ? `<div>日幣<br><strong style="font-size:17px">¥${jpyTotal.toLocaleString()}</strong>${proxyJpy > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 ¥${grossJpy.toLocaleString()} · 代買 −¥${proxyJpy.toLocaleString()}</div>` : ''}${shopJpy > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物 <strong>¥${(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style="color:#C4875A">購物 ¥${shopJpy.toLocaleString()}</span></div>` : ''}</div>` : ''}
+    ${grossTwd > 0 ? `<div>台幣<br><strong style="font-size:17px">NT$${twdTotal.toLocaleString()}</strong>${proxyTwd > 0 ? `<div style="font-size:10px;color:#aaa;margin-top:3px">毛額 NT$${grossTwd.toLocaleString()} · 代買 −NT$${proxyTwd.toLocaleString()}</div>` : ''}${shopTwd > 0 ? `<div style="font-size:11px;color:#555;margin-top:3px">不含購物 <strong>NT$${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style="color:#C4875A">購物 NT$${shopTwd.toLocaleString()}</span></div>` : ''}</div>` : ''}
   </div>
 </section>
 
@@ -415,14 +427,14 @@ ${top10twd.length > 0 ? `
               <div>
                 日幣<br /><strong style={{ fontSize: 17 }}>¥{jpyTotal.toLocaleString()}</strong>
                 {proxyJpy > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 ¥{grossJpy.toLocaleString()} · 代買 −¥{proxyJpy.toLocaleString()}</div>}
-                {shopJpy > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物、藥品 <strong>¥{(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物（含藥品）¥{shopJpy.toLocaleString()}</span></div>}
+                {shopJpy > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物 <strong>¥{(jpyTotal - shopJpy).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物 ¥{shopJpy.toLocaleString()}</span></div>}
               </div>
             )}
             {grossTwd > 0 && (
               <div>
                 台幣<br /><strong style={{ fontSize: 17 }}>NT${twdTotal.toLocaleString()}</strong>
                 {proxyTwd > 0 && <div style={{ fontSize: 10, color: '#aaa', marginTop: 3 }}>毛額 NT${grossTwd.toLocaleString()} · 代買 −NT${proxyTwd.toLocaleString()}</div>}
-                {shopTwd > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物、藥品 <strong>NT${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物（含藥品）NT${shopTwd.toLocaleString()}</span></div>}
+                {shopTwd > 0 && <div style={{ fontSize: 11, color: '#555', marginTop: 3 }}>不含購物 <strong>NT${(twdTotal - shopTwd).toLocaleString()}</strong> · <span style={{ color: '#C4875A' }}>購物 NT${shopTwd.toLocaleString()}</span></div>}
               </div>
             )}
           </div>
