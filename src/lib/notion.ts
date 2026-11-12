@@ -123,6 +123,42 @@ function parsePage(page: any): Receipt {
   }
 }
 
+// ===== App 設定（旅行清單、兩人名字）存在資料庫裡一筆特殊的列 =====
+export const SETTINGS_TITLE = '⚙️ App 設定（請勿刪除）'
+
+async function findSettingsPage(): Promise<any | null> {
+  const res = await notion.databases.query({
+    database_id: DB_ID,
+    filter: { property: '項目', title: { equals: SETTINGS_TITLE } },
+    page_size: 1,
+  })
+  return res.results[0] ?? null
+}
+
+export async function getRemoteSettings(): Promise<any | null> {
+  const page = await findSettingsPage()
+  if (!page) return null
+  const raw = ((page as any).properties?.[LINE_ITEMS_PROP]?.rich_text ?? []).map((t: any) => t.plain_text ?? '').join('')
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch { return null }
+}
+
+export async function saveRemoteSettings(settings: any) {
+  const propNames = await getPropertyNames()
+  await ensureLineItemsProp(propNames)
+  const json = JSON.stringify(settings)
+  const chunks: { text: { content: string } }[] = []
+  for (let i = 0; i < json.length; i += 1900) chunks.push({ text: { content: json.slice(i, i + 1900) } })
+  const properties: any = {
+    '項目': { title: [{ text: { content: SETTINGS_TITLE } }] },
+    [LINE_ITEMS_PROP]: { rich_text: chunks },
+    '備註': { rich_text: [{ text: { content: '記帳 App 的共用設定（旅行清單、兩人名字），各裝置自動同步。請勿刪除或修改。' } }] },
+  }
+  const page = await findSettingsPage()
+  if (page) await notion.pages.update({ page_id: page.id, properties })
+  else await notion.pages.create({ parent: { database_id: DB_ID }, properties })
+}
+
 export async function getReceipts(): Promise<Receipt[]> {
   const results: Receipt[] = []
   let cursor: string | undefined = undefined
@@ -137,6 +173,7 @@ export async function getReceipts(): Promise<Receipt[]> {
 
     for (const page of res.results) {
       if (page.object !== 'page') continue
+      if ((page as any).properties?.['項目']?.title?.[0]?.plain_text === SETTINGS_TITLE) continue // 設定列不是消費紀錄
       results.push(parsePage(page))
     }
 

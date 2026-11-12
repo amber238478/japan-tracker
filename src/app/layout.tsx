@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import ClientLogger from '@/components/ClientLogger'
+import SettingsSync from '@/components/SettingsSync'
 
 // iOS 點輸入框時不要自動放大畫面
 export const viewport: Viewport = {
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="zh-TW">
       <body>
         <ClientLogger />
+        <SettingsSync />
         {children}
       </body>
     </html>
