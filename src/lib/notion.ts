@@ -42,7 +42,7 @@ function parseLineItems(prop: any): LineItem[] {
     if (!Array.isArray(arr)) return []
     return arr
       .filter((x: any) => x && typeof x.name === 'string')
-      .map((x: any) => ({ name: x.name, nameJa: x.nameJa ?? '', qty: Number(x.qty) || 1, price: Number(x.price) || 0, ...(typeof x.split === 'number' ? { split: x.split } : {}) }))
+      .map((x: any) => ({ name: x.name, nameJa: x.nameJa ?? '', qty: Number(x.qty) || 1, price: Number(x.price) || 0 }))
   } catch {
     return []
   }
