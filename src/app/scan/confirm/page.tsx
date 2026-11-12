@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSettings, getActiveTrip } from '@/lib/settings'
-import { Category, PaymentMethod, Receipt } from '@/lib/types'
+import { Category, LineItem, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsEditor } from '@/components/LineItems'
+import { ratioFromItems } from '@/lib/itemSplit'
 import SplitShare from '@/components/SplitShare'
 import { catLabel } from '@/lib/categories'
 
@@ -41,6 +42,11 @@ export default function ConfirmPage() {
     })
   }, [])
 
+  // 有分帳且有明細時，依每項的分攤方式算出分帳比例
+  const withItemRatio = (f: any) => (f.splitWith != null && f.lineItems?.length
+    ? { ...f, splitRatio: ratioFromItems(f.lineItems, Number(f.amount) || 0, f.paidBy, s.user1) }
+    : f)
+  const setItems = (v: LineItem[]) => setForm((f: any) => withItemRatio({ ...f, lineItems: v }))
   const set = (key: keyof Receipt, val: any) => setForm(f => ({ ...f, [key]: val }))
 
   const save = async () => {
@@ -89,7 +95,7 @@ export default function ConfirmPage() {
           <textarea value={form.itemsJa ?? ''} onChange={e => set('itemsJa', e.target.value)} placeholder="品項（日文）" rows={2} />
         </div>
 
-        <LineItemsEditor items={form.lineItems ?? []} onChange={v => set('lineItems', v)} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} />
+        <LineItemsEditor items={form.lineItems ?? []} onChange={setItems} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} splitUsers={form.splitWith != null ? [s.user1, s.user2] : null} />
 
         {/* Amount & Date */}
         <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
@@ -135,7 +141,7 @@ export default function ConfirmPage() {
             <div style={{ display: 'flex', gap: 8 }}>
               {[s.user1, s.user2].map(u => (
                 <button key={u}
-                  onClick={() => setForm((f: any) => ({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
+                  onClick={() => setForm((f: any) => withItemRatio({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
                   style={{
                     flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid',
                     borderColor: form.paidBy === u ? 'var(--accent)' : 'var(--border)',
@@ -162,7 +168,7 @@ export default function ConfirmPage() {
                 }}>
                 不分帳
               </button>
-              <button onClick={() => set('splitWith', form.paidBy === s.user1 ? s.user2 : s.user1)}
+              <button onClick={() => setForm((f: any) => withItemRatio({ ...f, splitWith: f.paidBy === s.user1 ? s.user2 : s.user1 }))}
                 style={{
                   flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid',
                   borderColor: form.splitWith !== null ? 'var(--accent)' : 'var(--border)',

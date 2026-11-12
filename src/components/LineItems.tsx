@@ -1,5 +1,7 @@
 'use client'
 import { LineItem, Receipt } from '@/lib/types'
+import { getSettings } from '@/lib/settings'
+import { splitOptions, splitLabel, sharesFromItems, DEFAULT_ITEM_SPLIT } from '@/lib/itemSplit'
 
 const money = (n: number, currency?: string) => {
   const sign = n < 0 ? '-' : ''
@@ -14,6 +16,9 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
   const cur = receipt.currency
   const sum = sumLineItems(items)
   const diff = receipt.amount - sum
+  const st = getSettings()
+  const users: [string, string] = [st.user1, st.user2]
+  const [vu1, vu2] = receipt.splitWith && items.length ? sharesFromItems(items, receipt.amount) : [0, 0]
 
   return (
     <div style={{ borderTop: '1px dashed var(--border)', marginTop: 10, paddingTop: 10, fontSize: 12 }}>
@@ -32,6 +37,9 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
                   {x.name}{(x.qty ?? 1) > 1 && <span style={{ color: 'var(--text-muted)' }}> ×{x.qty}</span>}
                 </div>
                 {x.nameJa && <div style={{ fontSize: 10, color: 'var(--text-hint)', wordBreak: 'break-word' }}>{x.nameJa}</div>}
+                {receipt.splitWith && (
+                  <div style={{ fontSize: 10, color: 'var(--accent)', marginTop: 1 }}>⇌ {splitLabel(x.split, users[0], users[1])}</div>
+                )}
               </div>
               <div className="mono" style={{ flexShrink: 0, color: x.price < 0 ? 'var(--accent)' : 'var(--text-primary)' }}>{money(x.price, cur)}</div>
             </div>
@@ -46,6 +54,11 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
             <span>合計</span>
             <span className="mono">{money(receipt.amount, cur)}</span>
           </div>
+          {receipt.splitWith && items.some(x => x.split !== undefined) && (
+            <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4 }}>
+              依明細分攤：{users[0]} {money(vu1, cur)}／{users[1]} {money(vu2, cur)}
+            </div>
+          )}
         </>
       ) : (
         <div style={{ color: 'var(--text-muted)' }}>
@@ -62,12 +75,13 @@ export function LineItemsView({ receipt }: { receipt: Receipt }) {
 }
 
 /** 可編輯：掃描確認頁、編輯頁使用 */
-export function LineItemsEditor({ items, onChange, total, currency, fallbackNames }: {
+export function LineItemsEditor({ items, onChange, total, currency, fallbackNames, splitUsers }: {
   items: LineItem[]
   onChange: (items: LineItem[]) => void
   total: number
   currency?: string
   fallbackNames?: string   // 沒有明細時，可從「品項」文字建立
+  splitUsers?: [string, string] | null  // 有分帳時傳入兩人名字，每項可選誰負擔
 }) {
   const update = (i: number, patch: Partial<LineItem>) => onChange(items.map((x, j) => j === i ? { ...x, ...patch } : x))
   const remove = (i: number) => onChange(items.filter((_, j) => j !== i))
@@ -85,6 +99,15 @@ export function LineItemsEditor({ items, onChange, total, currency, fallbackName
           <input value={x.name} onChange={e => update(i, { name: e.target.value })} placeholder="品名" />
           <input type="number" inputMode="numeric" value={Number.isFinite(x.price) ? x.price : ''} onChange={e => update(i, { price: Math.round(Number(e.target.value)) || 0 })} placeholder="價格" style={{ textAlign: 'right' }} />
           <button onClick={() => remove(i)} aria-label="刪除此項" style={{ background: 'none', border: 'none', color: 'var(--text-hint)', fontSize: 18, cursor: 'pointer', padding: 0 }}>×</button>
+          {splitUsers && (
+            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, marginTop: -2, marginBottom: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>⇌ 分攤</span>
+              <select value={String(x.split ?? DEFAULT_ITEM_SPLIT)} onChange={e => update(i, { split: Number(e.target.value) })}
+                style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: 16, color: (x.split ?? DEFAULT_ITEM_SPLIT) === DEFAULT_ITEM_SPLIT ? 'var(--text-secondary)' : 'var(--accent)' }}>
+                {splitOptions(splitUsers[0], splitUsers[1]).map(o => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
+              </select>
+            </div>
+          )}
         </div>
       ))}
 
@@ -98,6 +121,16 @@ export function LineItemsEditor({ items, onChange, total, currency, fallbackName
           </button>
         )}
       </div>
+
+      {splitUsers && items.length > 0 && (() => {
+        const [a1, a2] = sharesFromItems(items, Number(total) || 0)
+        return (
+          <div style={{ fontSize: 12, marginTop: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--accent-light)', color: 'var(--accent)' }}>
+            依明細分攤：{splitUsers[0]} <b>{money(a1, currency)}</b>／{splitUsers[1]} <b>{money(a2, currency)}</b>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>預設平分；稅或尾數差額依比例分攤，會自動帶入下方分帳金額</div>
+          </div>
+        )
+      })()}
 
       {items.length > 0 && (
         <div style={{ fontSize: 11, marginTop: 8, color: diff === 0 ? 'var(--text-muted)' : 'var(--accent)' }}>
