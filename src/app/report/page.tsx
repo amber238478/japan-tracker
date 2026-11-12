@@ -249,12 +249,12 @@ export default function ReportPage() {
       const subRows = items.map(x => `
       <tr class="sub" style="background:${bg}">
         <td></td><td></td>
-        <td colspan="4" style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td>
+        <td style="padding:1px 6px 1px 14px;color:#555;white-space:normal;word-break:break-all">└ ${x.name}${(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}</td><td></td><td></td><td></td>
         <td style="padding:1px 6px;text-align:right;color:${x.price < 0 ? '#C04040' : '#555'}">${x.price < 0 ? '−' : ''}${sym}${Math.abs(x.price).toLocaleString()}</td>
       </tr>`).join('') + (items.length > 0 && diff !== 0 ? `
       <tr class="sub" style="background:${bg}">
         <td></td><td></td>
-        <td colspan="4" style="padding:1px 6px 3px 14px;color:#999">└ 其他（稅、尾數等差額）</td>
+        <td style="padding:1px 6px 3px 14px;color:#999;white-space:normal">└ 其他（稅、尾數等差額）</td><td></td><td></td><td></td>
         <td style="padding:1px 6px 3px;text-align:right;color:#999">${diff < 0 ? '−' : ''}${sym}${Math.abs(diff).toLocaleString()}</td>
       </tr>` : '')
       return `
@@ -288,7 +288,7 @@ export default function ReportPage() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${trip.name} 旅行帳單</title>
 <style>
-  html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { -webkit-text-size-adjust: none; text-size-adjust: none; }
   .sub td { font-size: 9px !important; }
   body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.6; max-width: 680px; margin: 0 auto; padding: 24px; }
   h1 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
@@ -568,7 +568,7 @@ ${top10twd.length > 0 ? `
               <col style={{ width: '18%' }} />
             </colgroup>
             <thead>
-              <tr style={{ background: '#f5f3f0' }}>
+              <tr className="keep-next" style={{ background: '#f5f3f0' }}>
                 {['日期', '分類', '品項', '店名', '付款人', '支付方式', '金額'].map(h => (
                   <th key={h} style={{ padding: '5px 6px', textAlign: h === '金額' ? 'right' : 'left', fontWeight: 600, color: '#555', borderBottom: '0.5px solid #ddd', overflow: 'hidden' }}>{h}</th>
                 ))}
@@ -601,9 +601,10 @@ ${top10twd.length > 0 ? `
                   <tr key={j} className={j < items.length - 1 || diff !== 0 ? 'keep-next' : undefined} style={{ background: bg }}>
                     <td></td>
                     <td></td>
-                    <td colSpan={4} style={{ fontSize: 9, padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
+                    <td style={{ fontSize: 9, padding: '1px 6px 1px 14px', color: '#555', wordBreak: 'break-all' }}>
                       └ {x.name}{(x.qty ?? 1) > 1 ? ` ×${x.qty}` : ''}
                     </td>
+                    <td></td><td></td><td></td>
                     <td style={{ fontSize: 9, padding: '1px 6px', textAlign: 'right', color: x.price < 0 ? '#C04040' : '#555', whiteSpace: 'nowrap' }}>
                       {x.price < 0 ? '−' : ''}{sym}{Math.abs(x.price).toLocaleString()}
                     </td>
@@ -613,7 +614,8 @@ ${top10twd.length > 0 ? `
                   <tr style={{ background: bg }}>
                     <td></td>
                     <td></td>
-                    <td colSpan={4} style={{ fontSize: 9, padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
+                    <td style={{ fontSize: 9, padding: '1px 6px 3px 14px', color: '#999' }}>└ 其他（稅、尾數等差額）</td>
+                    <td></td><td></td><td></td>
                     <td style={{ fontSize: 9, padding: '1px 6px 3px', textAlign: 'right', color: '#999', whiteSpace: 'nowrap' }}>{diff < 0 ? '−' : ''}{sym}{Math.abs(diff).toLocaleString()}</td>
                   </tr>
                 )}

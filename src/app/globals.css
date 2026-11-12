@@ -26,8 +26,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  -webkit-text-size-adjust: 100%; /* iOS 不要自動放大表格文字 */
-  text-size-adjust: 100%;
+  -webkit-text-size-adjust: none; /* iOS 不要自動放大表格文字 */
+  text-size-adjust: none;
   font-family: 'Noto Sans TC', sans-serif;
   background: var(--bg);
   color: var(--text-primary);
