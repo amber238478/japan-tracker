@@ -27,6 +27,7 @@ export interface LineItem {
   nameJa?: string   // 日文原文
   qty?: number      // 數量（預設 1）
   price: number     // 該行小計（已乘數量；折扣為負數）
+  share?: number    // 依品項分帳時 user1 負擔比例（0.5 平分、1/0 單人、0.4 = user2 6:user1 4）
 }
 
 export type Currency = 'JPY' | 'TWD'

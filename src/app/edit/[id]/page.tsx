@@ -5,6 +5,7 @@ import { getSettings } from '@/lib/settings'
 import { Category, PaymentMethod, Receipt } from '@/lib/types'
 import { markReceiptsDirty } from '@/lib/fetchReceipts'
 import { LineItemsEditor } from '@/components/LineItems'
+import { isItemMode, withShares, withoutShares, recalc } from '@/lib/itemShare'
 import SplitShare from '@/components/SplitShare'
 import { catLabel } from '@/lib/categories'
 import { compressForStorage } from '@/lib/image'
@@ -115,7 +116,7 @@ export default function EditPage() {
           <input value={form.storeName ?? ''} onChange={e => set('storeName', e.target.value)} placeholder="店名（選填）" />
         </div>
 
-        <LineItemsEditor items={form.lineItems ?? []} onChange={v => set('lineItems', v)} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} />
+        <LineItemsEditor items={form.lineItems ?? []} onChange={v => setForm((f: any) => recalc({ ...f, lineItems: v }, s.user1))} total={Number(form.amount) || 0} currency={form.currency} fallbackNames={form.items} shareUsers={form.splitWith != null && isItemMode(form.lineItems) ? [s.user1, s.user2] : null} />
 
         <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10 }}>
           <div>
@@ -126,7 +127,7 @@ export default function EditPage() {
                 <option value="TWD">TWD</option>
               </select>
             </div>
-            <input type="number" value={form.amount ?? ''} onChange={e => set('amount', Number(e.target.value))} placeholder="0" />
+            <input type="number" value={form.amount ?? ''} onChange={e => { const v = Number(e.target.value); setForm((f: any) => recalc({ ...f, amount: v }, s.user1)) }} placeholder="0" />
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 6 }}>日期</div>
@@ -163,7 +164,7 @@ export default function EditPage() {
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>付款人</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {[s.user1, s.user2].map(u => (
-                <button key={u} onClick={() => setForm((f: any) => ({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }))}
+                <button key={u} onClick={() => setForm((f: any) => recalc({ ...f, paidBy: u, splitWith: f.splitWith == null ? f.splitWith : (u === s.user1 ? s.user2 : s.user1) }, s.user1))}
                   style={{ flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                     borderColor: form.paidBy === u ? 'var(--accent)' : 'var(--border)',
                     background: form.paidBy === u ? 'var(--accent-light)' : 'transparent',
@@ -174,7 +175,7 @@ export default function EditPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => set('splitWith', null)}
+            <button onClick={() => setForm((f: any) => ({ ...f, splitWith: null, lineItems: f.lineItems ? withoutShares(f.lineItems) : f.lineItems }))}
               style={{ flex: 1, padding: '8px', borderRadius: 8, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
                 borderColor: 'var(--border)', background: form.splitWith === null ? 'var(--bg-surface)' : 'transparent',
                 color: form.splitWith === null ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
@@ -188,8 +189,21 @@ export default function EditPage() {
               AA 分帳
             </button>
           </div>
+          {form.splitWith !== null && (form.lineItems?.length ?? 0) > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, fontSize: 13 }}>
+              <span>依品項分帳</span>
+              <button onClick={() => setForm((f: any) => isItemMode(f.lineItems)
+                  ? { ...f, lineItems: withoutShares(f.lineItems) }
+                  : recalc({ ...f, lineItems: withShares(f.lineItems) }, s.user1))}
+                aria-label="依品項分帳"
+                style={{ width: 46, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', position: 'relative', padding: 0,
+                  background: isItemMode(form.lineItems) ? 'var(--accent)' : '#D9D9E3' }}>
+                <span style={{ position: 'absolute', top: 3, left: isItemMode(form.lineItems) ? 21 : 3, width: 22, height: 22, borderRadius: '50%', background: 'white', boxShadow: '0 1px 2px rgba(0,0,0,.2)', transition: 'left .15s' }} />
+              </button>
+            </div>
+          )}
           {form.splitWith !== null && (
-            <SplitShare users={[s.user1, s.user2]} total={Number(form.amount) || 0} ratio={form.splitRatio ?? 0.5} paidBy={form.paidBy} splitWith={form.splitWith} currency={form.currency} onChange={v => set('splitRatio', v)} />
+            <SplitShare users={[s.user1, s.user2]} total={Number(form.amount) || 0} ratio={form.splitRatio ?? 0.5} paidBy={form.paidBy} splitWith={form.splitWith} currency={form.currency} onChange={v => setForm((f: any) => ({ ...f, splitRatio: v, lineItems: isItemMode(f.lineItems) ? withoutShares(f.lineItems) : f.lineItems }))} />
           )}
         </div>
 
