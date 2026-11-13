@@ -146,7 +146,8 @@ export type ShareResult = 'shared' | 'cancelled' | 'blocked' | 'downloaded'
 export async function sharePdf(file: File, title: string): Promise<ShareResult> {
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title })
+      // 只分享檔案本身：一起帶 title 的話，iPhone「儲存到檔案」會多存一個 .txt
+      await navigator.share({ files: [file] })
       return 'shared'
     } catch (e) {
       const name = (e as any)?.name
