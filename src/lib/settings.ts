@@ -133,3 +133,49 @@ export function getDayNumber(date: string, tripStart: string): number {
   const diff = Math.floor((d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
   return diff + 1
 }
+
+/** 依出發日排序，最新的在前面 */
+export function sortTrips(trips: Trip[]): Trip[] {
+  return [...trips].sort((a, b) => (b.tripStart || '').localeCompare(a.tripStart || ''))
+}
+
+/** 下拉選單上的文字：熊本之旅（11/5，8 天） */
+export function tripLabel(t: Trip): string {
+  const [, m, d] = (t.tripStart || '').split('-')
+  return m ? `${t.name}（${Number(m)}/${Number(d)}，${t.tripDays} 天）` : t.name
+}
+
+/** 依年份分組（未封存），已封存另外一組 */
+export function groupTrips(trips: Trip[]): { label: string; trips: Trip[] }[] {
+  const groups: { label: string; trips: Trip[] }[] = []
+  for (const t of sortTrips(trips.filter(t => !t.archived))) {
+    const y = (t.tripStart || '').slice(0, 4) || '其他'
+    const g = groups.find(g => g.label === y)
+    if (g) g.trips.push(t); else groups.push({ label: y, trips: [t] })
+  }
+  const archived = sortTrips(trips.filter(t => t.archived))
+  if (archived.length) groups.push({ label: '已封存', trips: archived })
+  return groups
+}
+
+/** 今天落在哪一趟旅行的日期內（未封存的）；沒有就回傳 null */
+export function tripForToday(trips: Trip[], today = new Date()): Trip | null {
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const t = ymd(today)
+  for (const trip of sortTrips(trips.filter(x => !x.archived))) {
+    if (!trip.tripStart) continue
+    const end = new Date(trip.tripStart + 'T00:00:00')
+    end.setDate(end.getDate() + Math.max(1, trip.tripDays) - 1)
+    if (t >= trip.tripStart && t <= ymd(end)) return trip
+  }
+  return null
+}
+
+/** App 開啟時：今天在某趟旅行期間內，就自動切到那趟。回傳 true 代表有切換 */
+export function autoSelectTripByDate(): boolean {
+  const raw = getRawSettings()
+  const t = tripForToday(raw.trips)
+  if (!t || t.name === raw.activeTrip) return false
+  saveSettings({ ...raw, activeTrip: t.name }, { sync: false })
+  return true
+}

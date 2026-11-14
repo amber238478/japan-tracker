@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, getRawSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
+import { getSettings, getRawSettings, saveSettings, groupTrips, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, personalTotal } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
@@ -129,10 +129,15 @@ export default function Home() {
               </span>
               {showTripMenu && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: 'white', border: '0.5px solid var(--border)', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.06)', zIndex: 50, textAlign: 'left' }}>
-                  {visibleTrips.map(t => (
-                    <div key={t.name} onClick={() => selectTrip(t.name)}
-                      style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap', color: t.name === trip.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
-                      {t.name}
+                  {groupTrips(visibleTrips).map(g => (
+                    <div key={g.label}>
+                      <div style={{ padding: '6px 12px 2px', fontSize: 10, color: 'var(--text-hint)' }}>{g.label}</div>
+                      {g.trips.map(t => (
+                        <div key={t.name} onClick={() => selectTrip(t.name)}
+                          style={{ padding: '8px 12px', cursor: 'pointer', whiteSpace: 'nowrap', color: t.name === trip.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
+                          {t.name}{t.name === trip.name ? ' ✓' : ''}
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
