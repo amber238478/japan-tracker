@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSettings, saveSettings } from '@/lib/settings'
+import { getRawSettings, saveSettings } from '@/lib/settings'
 import { AppSettings, Trip } from '@/lib/types'
 import { useCallback } from 'react'
 import { exportReport } from '@/lib/report'
@@ -18,7 +18,7 @@ function newTripDraft(): Trip {
 
 export default function SettingsPage() {
   const router = useRouter()
-  const [form, setForm] = useState<AppSettings>(getSettings())
+  const [form, setForm] = useState<AppSettings>(getRawSettings())
   const [saved, setSaved] = useState(false)
   const [showAddTrip, setShowAddTrip] = useState(false)
   const [newTrip, setNewTrip] = useState<Trip>(newTripDraft())
@@ -44,7 +44,7 @@ export default function SettingsPage() {
     const name = newTrip.name.trim()
     if (!name) { alert('請輸入行程名稱'); return }
     if (form.trips.some(t => t.name === name)) { alert('已有相同名稱的行程'); return }
-    const trip = { ...newTrip, name }
+    const trip = { ...newTrip, name, companion: (newTrip.companion ?? '').trim() || form.user2 }
     setForm(f => ({ ...f, trips: [...f.trips, trip], activeTrip: trip.name }))
     setNewTrip(newTripDraft())
     setShowAddTrip(false)
@@ -78,7 +78,7 @@ export default function SettingsPage() {
 
   const save = () => {
     const ok = saveSettings(form)
-    const verified = ok && getSettings().user1 === form.user1 && getSettings().user2 === form.user2
+    const verified = ok && getRawSettings().user1 === form.user1 && getRawSettings().user2 === form.user2
     if (!verified) {
       alert('儲存失敗：瀏覽器封鎖了本地儲存（常見於無痕模式或隱私設定過嚴），請改用一般瀏覽模式再試一次')
       return
@@ -156,6 +156,10 @@ export default function SettingsPage() {
                   <input type="number" value={newTrip.tripDays} onChange={e => setNewTrip(t => ({ ...t, tripDays: Number(e.target.value) }))} />
                 </div>
               </div>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>這趟的旅伴</div>
+                <input value={newTrip.companion ?? ''} onChange={e => setNewTrip(t => ({ ...t, companion: e.target.value }))} placeholder={form.user2} />
+              </div>
               <button className="btn-primary" onClick={addTrip}>新增行程</button>
             </div>
           )}
@@ -193,14 +197,15 @@ export default function SettingsPage() {
 
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>旅伴</div>
+          <div style={{ fontSize: 11, color: 'var(--text-hint)', marginBottom: 8 }}>旅伴 2 每趟旅行各自設定，名字要和 Notion 裡的付款人一樣</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅伴 1（自己）</div>
               <input value={form.user1} onChange={e => set('user1', e.target.value)} placeholder="Amber" />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅伴 2</div>
-              <input value={form.user2} onChange={e => set('user2', e.target.value)} placeholder="男友" />
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>旅伴 2（{activeTrip.name}）</div>
+              <input value={activeTrip.companion ?? form.user2} onChange={e => setTripField('companion', e.target.value)} placeholder="旅伴名字" />
             </div>
           </div>
         </div>
