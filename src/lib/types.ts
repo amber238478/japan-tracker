@@ -41,6 +41,7 @@ export interface Trip {
   budget: number
   exchangeRate: number
   archived?: boolean
+  companion?: string  // 這趟的旅伴（旅伴 2）；沒填就用設定裡預設的 user2
 }
 
 export interface AppSettings {

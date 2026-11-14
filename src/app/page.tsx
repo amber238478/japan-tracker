@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
-import { getSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
+import { getSettings, getRawSettings, saveSettings, getActiveTrip, getDayNumber, receiptBelongsToTrip } from '@/lib/settings'
 import { calcSplit, personalTotal } from '@/lib/split'
 import { Receipt } from '@/lib/types'
 import { fetchReceipts } from '@/lib/fetchReceipts'
@@ -56,7 +56,7 @@ export default function Home() {
     return () => document.removeEventListener('click', onDocClick)
   }, [])
   const selectTrip = (name: string) => {
-    saveSettings({ ...settings, activeTrip: name })
+    saveSettings({ ...getRawSettings(), activeTrip: name })
     setShowTripMenu(false)
   }
   const touchStartX = useRef<number | null>(null)

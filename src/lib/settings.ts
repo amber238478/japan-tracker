@@ -31,7 +31,8 @@ function migrate(raw: any): AppSettings {
   return DEFAULT_SETTINGS
 }
 
-export function getSettings(): AppSettings {
+/** 存在本機的原始設定（user2 是預設旅伴）。設定頁、同步用這個。 */
+export function getRawSettings(): AppSettings {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS
   try {
     const s = localStorage.getItem('japan-tracker-settings')
@@ -40,6 +41,16 @@ export function getSettings(): AppSettings {
   } catch {
     return DEFAULT_SETTINGS
   }
+}
+
+/**
+ * 給各頁面用的設定：user2 換成「目前這趟旅行的旅伴」。
+ * 每趟旅行可以有不同旅伴（例如東京 = 飛飛、熊本 = Elca）。
+ */
+export function getSettings(): AppSettings {
+  const raw = getRawSettings()
+  const trip = raw.trips.find(t => t.name === raw.activeTrip) ?? raw.trips[0]
+  return trip?.companion ? { ...raw, user2: trip.companion } : raw
 }
 
 export function saveSettings(settings: AppSettings, opts: { sync?: boolean } = {}): boolean {
@@ -78,7 +89,7 @@ export async function pullSettings(): Promise<boolean> {
   const res = await fetch('/api/settings', { cache: 'no-store' })
   const d = await res.json()
   if (!d.success) return false
-  const local = getSettings()
+  const local = getRawSettings()
   const remote = d.data
   if (!remote || !Array.isArray(remote.trips) || remote.trips.length === 0) {
     // Notion 還沒有設定：本機有自己設定過的話，上傳當作共用設定
