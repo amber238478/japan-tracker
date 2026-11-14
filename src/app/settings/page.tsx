@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getRawSettings, saveSettings } from '@/lib/settings'
+import { getRawSettings, saveSettings, groupTrips, tripLabel } from '@/lib/settings'
 import { AppSettings, Trip } from '@/lib/types'
 import { useCallback } from 'react'
 import { exportReport } from '@/lib/report'
@@ -23,11 +23,9 @@ export default function SettingsPage() {
   const [showAddTrip, setShowAddTrip] = useState(false)
   const [newTrip, setNewTrip] = useState<Trip>(newTripDraft())
 
-  const [showArchived, setShowArchived] = useState(false)
 
   const activeTrip = form.trips.find(t => t.name === form.activeTrip) ?? form.trips[0]
   const visibleTrips = form.trips.filter(t => !t.archived)
-  const archivedTrips = form.trips.filter(t => t.archived)
 
   const set = (key: 'user1' | 'user2', val: string) => setForm(f => ({ ...f, [key]: val }))
 
@@ -102,41 +100,26 @@ export default function SettingsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div className="card">
           <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 10 }}>行程</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: showAddTrip ? 12 : 0 }}>
-            {visibleTrips.map(t => (
-              <button key={t.name} onClick={() => selectTrip(t.name)}
-                style={{ padding: '6px 12px', borderRadius: 10, border: '0.5px solid', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
-                  borderColor: form.activeTrip === t.name ? 'var(--accent)' : 'var(--border)',
-                  background: form.activeTrip === t.name ? 'var(--accent-light)' : 'transparent',
-                  color: form.activeTrip === t.name ? 'var(--accent)' : 'var(--text-secondary)' }}>
-                {t.name}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: showAddTrip ? 12 : 0 }}>
+            <select value={form.activeTrip} onChange={e => selectTrip(e.target.value)} style={{ flex: 1, minWidth: 0 }}>
+              {groupTrips(form.trips).map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.trips.map(t => <option key={t.name} value={t.name}>{tripLabel(t)}</option>)}
+                </optgroup>
+              ))}
+            </select>
             <button onClick={() => setShowAddTrip(v => !v)}
-              style={{ padding: '6px 12px', borderRadius: 10, border: '0.5px dashed var(--border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, background: 'transparent', color: 'var(--text-muted)' }}>
-              + 新增行程
+              style={{ flexShrink: 0, padding: '10px 14px', borderRadius: 10, border: '1px solid var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, background: showAddTrip ? 'var(--accent)' : 'var(--accent-light)', color: showAddTrip ? 'white' : 'var(--accent)' }}>
+              {showAddTrip ? '取消' : '＋ 新增'}
             </button>
           </div>
-
-          {archivedTrips.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <button onClick={() => setShowArchived(v => !v)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: 'var(--text-hint)', padding: 0 }}>
-                {showArchived ? '隱藏' : '顯示'}已封存行程（{archivedTrips.length}）
+          {activeTrip.archived && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+              這趟已封存（首頁不會出現）
+              <button onClick={() => unarchiveTrip(activeTrip.name)}
+                style={{ background: 'var(--bg-surface)', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: 'var(--accent)', padding: '4px 10px' }}>
+                取消封存
               </button>
-              {showArchived && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                  {archivedTrips.map(t => (
-                    <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 4px 4px 12px', borderRadius: 10, border: '0.5px solid var(--border)', fontSize: 13, color: 'var(--text-hint)' }}>
-                      <span>{t.name}</span>
-                      <button onClick={() => unarchiveTrip(t.name)}
-                        style={{ background: 'var(--bg-surface)', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: 'var(--accent)', padding: '4px 8px' }}>
-                        取消封存
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
